@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/(full-width-pages)/(auth)/layout.jsx", "src/components/auth/SignInForm.jsx", "src/components/form/input/InputField.jsx", "src/layout/AppSidebar.jsx", "src/components/example/ModalExample/FormInModal.jsx", "src/components/form/example-form/BasicForm.jsx", "src/components/form/form-elements/InputStates.jsx", "src/components/form/form-elements/InputGroup.jsx", "src/components/form/form-elements/DefaultInputs.jsx", "src/components/form/example-form/ExampleFormWithIcon.jsx", "src/components/form/example-form/ExampleFormTwo.jsx", "src/components/form/example-form/ExampleFormOne.jsx", "src/components/user-profile/UserMetaCard.jsx", "src/components/user-profile/UserInfoCard.jsx", "src/components/user-profile/UserAddressCard.jsx", "src/components/header/UserDropdown.jsx", "src/components/form/form-elements/DropZone.jsx", "next.config.js", "src/components/ui/button/Button.jsx", "src/app/(admin)/(others-pages)/(forms)/form-elements/page.jsx", "src/components/example/ModalExample/VerticallyCenteredModal.jsx", "src/components/example/ModalExample/FullScreenModal.jsx", "src/components/example/ModalExample/DefaultModal.jsx", "src/app/(admin)/(ui-elements)/buttons/page.jsx", "src/app/(admin)/(others-pages)/transport-companies/page.jsx", "src/layout/AppHeader.jsx", "src/components/ecommerce/EcommerceMetrics.jsx", "src/app/(admin)/page.jsx", "src/components/header/NotificationDropdown.jsx"],
+  "exclude": ["node_modules"]
+}
