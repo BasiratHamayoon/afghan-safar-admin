@@ -4,9 +4,9 @@ import { jwtVerify } from "jose";
 
 const fetchServer = async (
   directory,
-  method,
+  method = "GET",
   body,
-  headers,
+  headers = {},
   sendAuthToken = true,
   expectCookie = false
 ) => {
@@ -20,7 +20,14 @@ const fetchServer = async (
 
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("authorization")?.value;
+    let token = cookieStore.get("authorization")?.value;
+
+    if (token) {
+      token = decodeURIComponent(token);
+      if (token.startsWith("s:")) {
+        token = token.slice(2).split(".")[0];
+      }
+    }
 
     const requestHeaders = {
       Accept: "application/json",
@@ -28,18 +35,16 @@ const fetchServer = async (
       ...headers,
     };
 
-    // Forward the token in ALL formats the backend middleware might expect
-    if (token) {
-      requestHeaders["Authorization"] = `Bearer ${token}`;
-      requestHeaders["authorization"] = `Bearer ${token}`;
-      requestHeaders["Cookie"] = `authorization=${token}`;
+    // Send SINGLE clean Authorization header
+    if (sendAuthToken && token) {
+      requestHeaders["Authorization"] = `Bearer ${token.trim()}`;
     }
 
     const isGetOrHead =
-      !method || method.toUpperCase() === "GET" || method.toUpperCase() === "HEAD";
+      method.toUpperCase() === "GET" || method.toUpperCase() === "HEAD";
 
     const response = await fetch(fullUrl, {
-      method: method ? method.toUpperCase() : "GET",
+      method: method.toUpperCase(),
       body: !isGetOrHead && body ? JSON.stringify(body) : undefined,
       headers: requestHeaders,
       credentials: "include",
@@ -49,11 +54,16 @@ const fetchServer = async (
     if (setCookieHeader && expectCookie) {
       const authCookieMatch = setCookieHeader.match(/authorization=([^;]+)/);
       if (authCookieMatch && authCookieMatch[1]) {
-        cookieStore.set("authorization", authCookieMatch[1], {
+        let authValue = decodeURIComponent(authCookieMatch[1]);
+        if (authValue.startsWith("s:")) {
+          authValue = authValue.slice(2).split(".")[0];
+        }
+
+        cookieStore.set("authorization", authValue, {
           maxAge: 86400000 * 15,
           httpOnly: true,
-          secure: true,
-          sameSite: "Lax",
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
           path: "/",
         });
       }
@@ -62,7 +72,7 @@ const fetchServer = async (
     const parsedData = await response.json();
     return JSON.stringify(parsedData);
   } catch (error) {
-    console.error(`❌ [fetchServer] Connection failed to ${fullUrl}:`, error.message);
+    console.error(`❌ [fetchServer] Error on ${fullUrl}:`, error.message);
     return JSON.stringify({
       success: false,
       message: "Could not communicate with backend server.",
@@ -79,8 +89,13 @@ const logout = async () => {
 const getDetailsFromAuthToken = async () => {
   try {
     const cookieStore = await cookies();
-    const authToken = cookieStore.get("authorization")?.value;
+    let authToken = cookieStore.get("authorization")?.value;
     if (!authToken) return false;
+
+    authToken = decodeURIComponent(authToken);
+    if (authToken.startsWith("s:")) {
+      authToken = authToken.slice(2).split(".")[0];
+    }
 
     const secretKey =
       process.env.NEXT_PUBLIC_SECRET_KEY || process.env.SECRET_KEY;
@@ -111,7 +126,7 @@ const setCookie = async (key, value) => {
     httpOnly: true,
     sameSite: "strict",
     priority: "high",
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     maxAge: 315576000000,
   });
 };

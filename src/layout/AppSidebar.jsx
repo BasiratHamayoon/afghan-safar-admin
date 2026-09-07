@@ -15,7 +15,6 @@ import {
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
   UserCircleIcon,
   Bus,
   Notifications,
@@ -31,95 +30,206 @@ import { useTranslations } from "next-intl";
 
 const AppSidebar = ({ locale }) => {
   const t = useTranslations("AppSideBar");
+  // Safe helper to prevent crashes if a translation key is missing
+  const getTrans = (key, fallback) => (t.has(key) ? t(key) : fallback || key);
+
   const { companyUser, travelAgent } = useContext(ContextAdmin);
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
-  const [navItems, setnavItems] = useState([
-    {
-      icon: <GridIcon />,
-      name: t("Dashboard"),
-      path: "/",
-    },
-    {
-      icon: <UserCircleIcon />,
-      name: t("Users"),
-      path: "/users",
-    },
-    {
-      icon: <UserCircleIcon />,
-      name: t("Travel Agents"),
-      subItems: [
-        { name: t("Travel Agents"), path: "/travel-agents" },
-        { name: t("Add Travel Agent"), path: "/add-travel-agent" },
-      ],
-    },
-    {
-      icon: <Bus />,
-      name: t("Tranport Companies"),
-      subItems: [
-        { name: t("Companies"), path: "/transport-companies" },
-        { name: t("Add Companies"), path: "/add-transport-company" },
-      ],
-    },
-    {
-      name: t("Moderators"),
-      icon: <BoxCubeIcon />,
-      subItems: [
-        { name: t("Moderators"), path: "/moderators" },
-        { name: t("Add Moderators"), path: "/add-moderators" },
-      ],
-    },
-    {
-      name: t("Drivers"),
-      icon: <Driver />,
-      subItems: [
-        { name: t("Drivers"), path: "/drivers" },
-        { name: t("Add Drivers"), path: "/add-driver" },
-      ],
-    },
-    {
-      name: t("Transportations"),
-      icon: <Location />,
-      subItems: [
-        { name: t("Transportations"), path: "/transportations" },
-        { name: t("Add Transportations"), path: "/add-transportations" },
-      ],
-    },
-    {
-      name: t("Ticket Bookings"),
-      icon: <BookedTickets />,
-      path: "/booked-tickets",
-    },
-    {
-      name: t("Ads"),
-      icon: <Ads />,
-      subItems: [
-        { name: t("Ad list"), path: "/ads-list" },
-        { name: t("Create ad"), path: "/create-ad" },
-        { name: t("Background ad"), path: "/background-ad" },
-        { name: t("Create Background ad"), path: "/create-background-ad" },
-      ],
-    },
-    {
-      icon: <Notifications />,
-      name: t("Notifications"),
-      path: "/send-notifications",
-    },
-    {
-      icon: <MailIcon />,
-      name: t("Contact Submission"),
-      path: "/contact-Submission",
-    },
-  ]);
 
-  const renderMenuItems = (navItems, menuType) => (
+  // ─── 1. ALL REACT HOOKS DECLARED AT THE VERY TOP ───
+  const [navItems, setnavItems] = useState([]);
+  const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [subMenuHeight, setSubMenuHeight] = useState({});
+  const subMenuRefs = useRef({});
+
+  const isActive = useCallback((path) => path === pathname, [pathname]);
+
+  const handleSubmenuToggle = (index, menuType) => {
+    setOpenSubmenu((prevOpenSubmenu) => {
+      if (
+        prevOpenSubmenu &&
+        prevOpenSubmenu.type === menuType &&
+        prevOpenSubmenu.index === index
+      ) {
+        return null;
+      }
+      return { type: menuType, index };
+    });
+  };
+
+  useEffect(() => {
+    if (openSubmenu !== null) {
+      const key = `${openSubmenu.type}-${openSubmenu.index}`;
+      if (subMenuRefs.current[key]) {
+        setSubMenuHeight((prevHeights) => ({
+          ...prevHeights,
+          [key]: subMenuRefs.current[key]?.scrollHeight || 0,
+        }));
+      }
+    }
+  }, [openSubmenu]);
+
+  useEffect(() => {
+    if (travelAgent) {
+      setnavItems([
+        {
+          icon: <GridIcon />,
+          name: getTrans("Dashboard", "Dashboard"),
+          path: "/",
+        },
+        {
+          icon: <Location />,
+          name: getTrans("Transportations", "Transportations"),
+          path: "/transportations",
+        },
+        {
+          icon: <BookedTickets />,
+          name: getTrans("Your Bookings", "Your Bookings"),
+          path: "/bookings",
+        },
+      ]);
+    } else if (companyUser) {
+      setnavItems([
+        {
+          icon: <GridIcon />,
+          name: getTrans("Dashboard", "Dashboard"),
+          path: "/",
+        },
+        {
+          icon: <Bus />,
+          name: getTrans("My Company", "My Company"),
+          path: "/my-company",
+        },
+        {
+          icon: <Location />,
+          name: getTrans("Transportations", "Transportations"),
+          path: "/transportations",
+        },
+        {
+          icon: <BookedTickets />,
+          name: getTrans("Ticket Bookings", "Ticket Bookings"),
+          path: "/booked-tickets",
+        },
+        {
+          icon: <Notifications />,
+          name: getTrans("Notifications", "Notifications"),
+          path: "/send-notifications",
+        },
+      ]);
+    } else {
+      setnavItems([
+        {
+          icon: <GridIcon />,
+          name: getTrans("Dashboard", "Dashboard"),
+          path: "/",
+        },
+        {
+          icon: <UserCircleIcon />,
+          name: getTrans("Users", "Users"),
+          path: "/users",
+        },
+        {
+          icon: <TravelAgent />,
+          name: getTrans("Travel Agents", "Travel Agents"),
+          subItems: [
+            { name: getTrans("Travel Agents", "Travel Agents"), path: "/travel-agents" },
+            { name: getTrans("Add Travel Agent", "Add Travel Agent"), path: "/add-travel-agent" },
+          ],
+        },
+        {
+          icon: <Bus />,
+          name: getTrans("Tranport Companies", "Transport Companies"),
+          subItems: [
+            { name: getTrans("Companies", "Companies"), path: "/transport-companies" },
+            { name: getTrans("Add Companies", "Add Companies"), path: "/add-transport-company" },
+          ],
+        },
+        {
+          name: getTrans("Moderators", "Moderators"),
+          icon: <BoxCubeIcon />,
+          subItems: [
+            { name: getTrans("Moderators", "Moderators"), path: "/moderators" },
+            { name: getTrans("Add Moderators", "Add Moderators"), path: "/add-moderators" },
+          ],
+        },
+        {
+          name: getTrans("Drivers", "Drivers"),
+          icon: <Driver />,
+          subItems: [
+            { name: getTrans("Drivers", "Drivers"), path: "/drivers" },
+            { name: getTrans("Add Drivers", "Add Drivers"), path: "/add-driver" },
+          ],
+        },
+        {
+          name: getTrans("Transportations", "Transportations"),
+          icon: <Location />,
+          subItems: [
+            { name: getTrans("Transportations", "Transportations"), path: "/transportations" },
+            { name: getTrans("Add Transportations", "Add Transportations"), path: "/add-transportations" },
+          ],
+        },
+        {
+          name: getTrans("Ticket Bookings", "Ticket Bookings"),
+          icon: <BookedTickets />,
+          path: "/booked-tickets",
+        },
+        {
+          name: getTrans("Destinations", "Destinations"),
+          icon: <Location />,
+          subItems: [
+            { name: getTrans("Destinations", "Destinations"), path: "/destinations" },
+            { name: getTrans("Add Destination", "Add Destination"), path: "/add-destination" },
+          ],
+        },
+        {
+          name: getTrans("Hotels", "Hotels"),
+          icon: <Location />,
+          subItems: [
+            { name: getTrans("Hotels", "Hotels"), path: "/hotels" },
+            { name: getTrans("Add Hotel", "Add Hotel"), path: "/add-hotel" },
+          ],
+        },
+        {
+          name: getTrans("Hotel Bookings", "Hotel Bookings"),
+          icon: <BookedTickets />,
+          path: "/hotel-bookings",
+        },
+        {
+          name: getTrans("Ads", "Ads"),
+          icon: <Ads />,
+          subItems: [
+            { name: getTrans("Ad list", "Ad list"), path: "/ads-list" },
+            { name: getTrans("Create ad", "Create ad"), path: "/create-ad" },
+            { name: getTrans("Background ad", "Background ad"), path: "/background-ad" },
+            {
+              name: getTrans("Create Background ad", "Create Background ad"),
+              path: "/create-background-ad",
+            },
+          ],
+        },
+        {
+          icon: <Notifications />,
+          name: getTrans("Notifications", "Notifications"),
+          path: "/send-notifications",
+        },
+        {
+          icon: <MailIcon />,
+          name: getTrans("Contact Submission", "Contact Submission"),
+          path: "/contact-Submission",
+        },
+      ]);
+    }
+  }, [companyUser, travelAgent, t]);
+
+  const renderMenuItems = (items, menuType) => (
     <ul className="flex flex-col gap-4">
-      {navItems.map((nav, index) => (
+      {items.map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group  ${
+              className={`menu-item group ${
                 openSubmenu?.type === menuType && openSubmenu?.index === index
                   ? "menu-item-active"
                   : "menu-item-inactive"
@@ -130,7 +240,7 @@ const AppSidebar = ({ locale }) => {
               }`}
             >
               <span
-                className={` ${
+                className={`${
                   openSubmenu?.type === menuType && openSubmenu?.index === index
                     ? "menu-item-icon-active"
                     : "menu-item-icon-inactive"
@@ -139,11 +249,11 @@ const AppSidebar = ({ locale }) => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className={`menu-item-text`}>{nav.name}</span>
+                <span className="menu-item-text">{nav.name}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200  ${
+                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${
                     openSubmenu?.type === menuType &&
                     openSubmenu?.index === index
                       ? "rotate-180 text-brand-500"
@@ -164,9 +274,9 @@ const AppSidebar = ({ locale }) => {
                   className={`${
                     isActive(nav.path)
                       ? `menu-item-icon-active ${
-                          index == 3 ||
-                          index == 6 ||
-                          (companyUser && index == 1)
+                          index === 3 ||
+                          index === 6 ||
+                          (companyUser && index === 1)
                             ? "[&_path]:stroke-brand-500"
                             : "[&_svg]:fill-brand-500"
                         }`
@@ -176,7 +286,7 @@ const AppSidebar = ({ locale }) => {
                   {nav.icon}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className={`menu-item-text`}>{nav.name}</span>
+                  <span className="menu-item-text">{nav.name}</span>
                 )}
               </Link>
             )
@@ -217,161 +327,6 @@ const AppSidebar = ({ locale }) => {
     </ul>
   );
 
-  useEffect(() => {
-    travelAgent
-      ? setnavItems((e) => [
-          {
-            icon: <GridIcon />,
-            name: t("Dashboard"),
-            path: "/",
-          },
-          {
-            icon: <Location />,
-            name: t("Transportations"),
-            path: "/transportations",
-          },
-          {
-            icon: <BookedTickets />,
-            name: t("Your Bookings"),
-            path: "/bookings",
-          },
-        ])
-      : companyUser
-      ? setnavItems((e) => {
-          console.log(e);
-          const temp = [...e];
-          temp.splice(1, 4);
-          temp[1] = {
-            icon: <Bus />,
-            name: t("My Company"),
-            path: "/my-company",
-          };
-          temp.splice(4, 1);
-          temp.splice(5, 1);
-          console.log(temp);
-          return [...temp];
-        })
-      : setnavItems([
-          {
-            icon: <GridIcon />,
-            name: t("Dashboard"),
-            path: "/",
-          },
-          {
-            icon: <UserCircleIcon />,
-            name: t("Users"),
-            path: "/users",
-          },
-          {
-            icon: <TravelAgent />,
-            name: t("Travel Agents"),
-            subItems: [
-              { name: t("Travel Agents"), path: "/travel-agents" },
-              { name: t("Add Travel Agent"), path: "/add-travel-agent" },
-            ],
-          },
-          {
-            icon: <Bus />,
-            name: t("Tranport Companies"),
-            subItems: [
-              { name: t("Companies"), path: "/transport-companies" },
-              { name: t("Add Companies"), path: "/add-transport-company" },
-            ],
-          },
-          {
-            name: t("Moderators"),
-            icon: <BoxCubeIcon />,
-            subItems: [
-              { name: t("Moderators"), path: "/moderators" },
-              { name: t("Add Moderators"), path: "/add-moderators" },
-            ],
-          },
-          {
-            name: t("Drivers"),
-            icon: <Driver />,
-            subItems: [
-              { name: t("Drivers"), path: "/drivers" },
-              { name: t("Add Drivers"), path: "/add-driver" },
-            ],
-          },
-          {
-            name: t("Transportations"),
-            icon: <Location />,
-            subItems: [
-              { name: t("Transportations"), path: "/transportations" },
-              { name: t("Add Transportations"), path: "/add-transportations" },
-            ],
-          },
-          {
-            name: t("Ticket Bookings"),
-            icon: <BookedTickets />,
-            path: "/booked-tickets",
-          },
-          {
-            name: t("Destinations"),
-            icon: <Location />,
-            subItems: [
-              { name: t("Destinations"), path: "/destinations" },
-              { name: t("Add Destination"), path: "/add-destination" },
-            ],
-          },
-          {
-            name: t("Ads"),
-            icon: <Ads />,
-            subItems: [
-              { name: t("Ad list"), path: "/ads-list" },
-              { name: t("Create ad"), path: "/create-ad" },
-              { name: t("Background ad"), path: "/background-ad" },
-              {
-                name: t("Create Background ad"),
-                path: "/create-background-ad",
-              },
-            ],
-          },
-          {
-            icon: <Notifications />,
-            name: t("Notifications"),
-            path: "/send-notifications",
-          },
-          {
-            icon: <MailIcon />,
-            name: t("Contact Submission"),
-            path: "/contact-Submission",
-          },
-        ]);
-  }, [companyUser, travelAgent]);
-
-  const [openSubmenu, setOpenSubmenu] = useState(null);
-  const [subMenuHeight, setSubMenuHeight] = useState({});
-  const subMenuRefs = useRef({});
-  const isActive = useCallback((path) => path === pathname, [pathname]);
-
-  useEffect(() => {
-    // Set the height of the submenu items when the submenu is opened
-    if (openSubmenu !== null) {
-      const key = `${openSubmenu.type}-${openSubmenu.index}`;
-      if (subMenuRefs.current[key]) {
-        setSubMenuHeight((prevHeights) => ({
-          ...prevHeights,
-          [key]: subMenuRefs.current[key]?.scrollHeight || 0,
-        }));
-      }
-    }
-  }, [openSubmenu]);
-
-  const handleSubmenuToggle = (index, menuType) => {
-    setOpenSubmenu((prevOpenSubmenu) => {
-      if (
-        prevOpenSubmenu &&
-        prevOpenSubmenu.type === menuType &&
-        prevOpenSubmenu.index === index
-      ) {
-        return null;
-      }
-      return { type: menuType, index };
-    });
-  };
-
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 ${
@@ -409,7 +364,7 @@ const AppSidebar = ({ locale }) => {
           />
           {(isExpanded || isMobileOpen || isHovered) && (
             <h1 className="text-[25px] leading-[25px] font-[700] mb-[4px] dark:text-white">
-              {t("Afghan Safar")}
+              {getTrans("Afghan Safar", "Afghan Safar")}
             </h1>
           )}
         </Link>

@@ -18,9 +18,11 @@ const safeParse = (data) => {
 };
 
 function MainStateAdmin({ children }) {
+  // ─── 1. ALL REACT HOOKS DECLARED ONCE AT THE VERY TOP ───
   const [loading, setloading] = useState(false);
   const [tempAuthtoken, settempAuthtoken] = useState(null);
   const [userDetails, callerFunc, error] = useUserDetails();
+  
   const [userCardsData, setuserCardsData] = useState({
     data: [],
     start: 0,
@@ -85,6 +87,8 @@ function MainStateAdmin({ children }) {
     allDone: false,
     stats: {},
   });
+  
+  // Destinations State
   const [destinationsCardsData, setDestinationsCardsData] = useState({
     data: [],
     start: 0,
@@ -92,11 +96,29 @@ function MainStateAdmin({ children }) {
     allDone: false,
     stats: {},
   });
+
+  // Hotels State
+  const [hotelsCardsData, setHotelsCardsData] = useState({
+    data: [],
+    start: 0,
+    end: 30,
+    allDone: false,
+    stats: {},
+  });
+
+  // Hotel Bookings State
+  const [hotelBookingsData, setHotelBookingsData] = useState({
+    data: [],
+    start: 0,
+    end: 30,
+    allDone: false,
+    stats: {},
+  });
+
   const [dashboardData, setdashboardData] = useState(false);
   const [companyUser, setcompanyUser] = useState(null);
   const [travelAgent, settravelAgent] = useState(null);
   const [companyDetails, setcompanyDetails] = useState(null);
-
   const [ticket, setTicket] = useState(null);
 
   useEffect(() => {
@@ -106,6 +128,7 @@ function MainStateAdmin({ children }) {
     }
   }, [userDetails]);
 
+  // ─── 2. HELPER FUNCTIONS & API CALL METHODS ───
   const url = process.env.NEXT_PUBLIC_SERVER_URL;
   const useFetch = async (
     dirctory,
@@ -117,7 +140,6 @@ function MainStateAdmin({ children }) {
   ) => {
     try {
       loadFunc && loadFunc(true);
-      console.log(dirctory);
       const data = await fetch(url + dirctory, {
         method: method || "GET",
         body: body && JSON.stringify(body),
@@ -130,11 +152,10 @@ function MainStateAdmin({ children }) {
         credentials: "include",
       });
       const parsedData = await data.json();
-      console.log(parsedData);
       loadFunc && loadFunc(false);
       return parsedData;
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -636,7 +657,7 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  //---------------------------------------------------------------------------------------  transport company user
+  //-------------------- transport company user --------------------
 
   const getDashboard = async () => {
     const stats = safeParse(localStorage.getItem("dashboardStats"));
@@ -754,7 +775,7 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  //---------------------------------------------------------------------------------------  travel agent
+  //-------------------- travel agent --------------------
   const getDashboardTravelAgent = async () => {
     const stats = safeParse(localStorage.getItem("dashboardStatsTravelAgent"));
 
@@ -856,7 +877,7 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  //--------------------------------------------------------------------------------------- destinations
+  //-------------------- destinations --------------------
   const getDestinationsData = async (
     filter,
     start = destinationsCardsData.start,
@@ -957,6 +978,90 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
+  // ─── HOTELS API FUNCTIONS ───
+  const getHotelsData = async (filter, start = hotelsCardsData.start, end = hotelsCardsData.end) => {
+    if (hotelsCardsData.allDone && loading) return null;
+    setloading(true);
+    const raw = await fetchServer("/hotels/get-hotels", "POST", { start, end, ...filter }, {}, true);
+    const res = safeParse(raw);
+    if (res?.data) {
+      setHotelsCardsData((e) => ({
+        ...e,
+        data: [...e.data, ...res.data],
+        allDone: res?.allDone,
+        start: e.end,
+        end: e.end + 30,
+        stats: e.start === 0 ? res.stats : e.stats,
+      }));
+    }
+    setloading(false);
+  };
+
+  const addHotel = async (args) => {
+    const raw = await fetchServer("/hotels/add-hotel", "POST", args, {}, true, false);
+    return safeParse(raw);
+  };
+
+  const editHotel = async (args) => {
+    const raw = await fetchServer("/hotels/edit-hotel", "POST", args, {}, true, false);
+    return safeParse(raw);
+  };
+
+  const deleteHotels = async (id) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/delete-hotel/" + id, "DELETE", false, {}, true);
+    setloading(false);
+    return safeParse(raw);
+  };
+
+  const fetchHotelById = async (id) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/" + id, "GET", false, {}, true);
+    setloading(false);
+    return safeParse(raw);
+  };
+
+  const approveHotel = async (id) => {
+    const raw = await fetchServer("/hotels/approve-hotel/" + id, "POST", false, {}, true);
+    return safeParse(raw);
+  };
+
+  const rejectHotel = async (id) => {
+    const raw = await fetchServer("/hotels/reject-hotel/" + id, "POST", false, {}, true);
+    return safeParse(raw);
+  };
+
+  // ─── HOTEL BOOKINGS API FUNCTIONS ───
+  const getHotelBookingsData = async (filter, start = hotelBookingsData.start, end = hotelBookingsData.end) => {
+    if (hotelBookingsData.allDone && loading) return null;
+    setloading(true);
+    const raw = await fetchServer("/hotel-bookings/manager-bookings", "POST", { start, end, ...filter }, {}, true);
+    const res = safeParse(raw);
+    if (res?.data) {
+      setHotelBookingsData((e) => ({
+        ...e,
+        data: [...e.data, ...res.data],
+        allDone: res?.allDone,
+        start: e.end,
+        end: e.end + 30,
+        stats: e.start === 0 ? res.stats : e.stats,
+      }));
+    }
+    setloading(false);
+  };
+
+  const updateBookingState = async (id, state, actionNote) => {
+    const raw = await fetchServer("/hotel-bookings/update-booking-state/" + id, "POST", { state, actionNote }, {}, true);
+    return safeParse(raw);
+  };
+
+  const deleteHotelBooking = async (id) => {
+    setloading(true);
+    const raw = await fetchServer("/hotel-bookings/delete-booking/" + id, "DELETE", false, {}, true);
+    setloading(false);
+    return safeParse(raw);
+  };
+
   return (
     <ContextAdmin.Provider
       value={{
@@ -1053,6 +1158,22 @@ function MainStateAdmin({ children }) {
         fetchDestinationById,
         setDestinationRecommendation,
         removeDestinationRecommendation,
+        // Hotels
+        hotelsCardsData,
+        setHotelsCardsData,
+        getHotelsData,
+        addHotel,
+        editHotel,
+        deleteHotels,
+        fetchHotelById,
+        approveHotel,
+        rejectHotel,
+        // Hotel Bookings
+        hotelBookingsData,
+        setHotelBookingsData,
+        getHotelBookingsData,
+        updateBookingState,
+        deleteHotelBooking,
       }}
     >
       {children}

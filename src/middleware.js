@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { logout } from "./actions";
 
-// 1. Move helper function to top (or use standard 'function' for hoisting)
+// Safe, Edge-compatible JWT verification
 async function jwtVerifyer(token) {
   try {
     const secret = process.env.NEXT_PUBLIC_SECRET_KEY || process.env.SECRET_KEY;
@@ -18,48 +17,66 @@ async function jwtVerifyer(token) {
     );
     return payload; // Token is valid
   } catch (error) {
-    console.error("JWT Verification Failed:", error.message);
-    return false; // Invalid token
+    return false; // Invalid or expired token
   }
 }
 
-const allowedPatterns = [
-  /^\/$/, // "/"
-  /^\/transportations$/,
+// Whitelisted routes for transport company users
+const allowedPatternsCompanyUser = [
+  /^\/$/,
+  /^\/transportations(\/.*)?$/,
   /^\/add-transportations$/,
   /^\/send-notifications$/,
-  /^\/booked-tickets$/,
+  /^\/booked-tickets(\/.*)?$/,
   /^\/profile$/,
   /^\/my-company$/,
-  /^\/transportations(\/.*)?$/,
-  /^\/booked-tickets(\/.*)?$/,
 ];
 
 export async function middleware(request) {
-  if (request.url.includes("request-account-deletion")) return;
+  const { pathname } = request.nextUrl;
+
+  // 1. Ignore account deletion or public assets
+  if (pathname.includes("request-account-deletion")) return NextResponse.next();
 
   const authToken = request.cookies.get("authorization")?.value;
 
-  if (request.url.includes("login") && request.cookies.has("authorization")) {
-    return NextResponse.redirect(new URL("/", request.url));
-  } else if (!request.url.includes("login")) {
-    const details = authToken ? await jwtVerifyer(authToken) : false;
+  // 2. Handle /login route
+  if (pathname.startsWith("/login")) {
+    if (authToken) {
+      const details = await jwtVerifyer(authToken);
+      // ONLY redirect to dashboard if the token is ACTUALLY VALID
+      if (details) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+    }
+    // If no token or token is invalid, let user see the login page cleanly
+    return NextResponse.next();
+  }
 
-    const isAllowed = allowedPatterns.some((pattern) =>
-      pattern.test(request.nextUrl.pathname)
+  // 3. Protect all private routes
+  const details = authToken ? await jwtVerifyer(authToken) : false;
+
+  // If no token or token validation fails, clear cookies and redirect to /login
+  if (!authToken || !details) {
+    const redirectResponse = NextResponse.redirect(new URL("/login", request.url));
+    redirectResponse.cookies.delete("authorization");
+    redirectResponse.cookies.delete("language");
+    return redirectResponse;
+  }
+
+  // 4. Role-based route protection for transport_company_user
+  if (details.role === "transport_company_user") {
+    const isAllowed = allowedPatternsCompanyUser.some((pattern) =>
+      pattern.test(pathname)
     );
-
-    if (details?.role === "transport_company_user" && !isAllowed) {
+    if (!isAllowed) {
       return NextResponse.redirect(new URL("/", request.url));
     }
-
-    if (!authToken || !details) {
-      await logout();
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
   }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|favicon.ico|images).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images).*)"],
 };
