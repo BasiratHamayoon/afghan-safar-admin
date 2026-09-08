@@ -2,6 +2,8 @@
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 const fetchServer = async (
   directory,
   method = "GET",
@@ -13,7 +15,7 @@ const fetchServer = async (
   const rawBaseUrl =
     process.env.SERVER_URL ||
     process.env.NEXT_PUBLIC_SERVER_URL ||
-    "http://127.0.0.1:5500";
+    "https://api-afghanbooking.sanzylimited.com";
   const baseUrl = rawBaseUrl.replace(/\/+$/, "");
   const endpoint = directory.startsWith("/") ? directory : `/${directory}`;
   const fullUrl = `${baseUrl}${endpoint}`;
@@ -30,12 +32,13 @@ const fetchServer = async (
     }
 
     const requestHeaders = {
-      Accept: "application/json",
+      Accept: "application/json, text/plain, */*",
       "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       ...headers,
     };
 
-    // Send SINGLE clean Authorization header
     if (sendAuthToken && token) {
       requestHeaders["Authorization"] = `Bearer ${token.trim()}`;
     }
@@ -47,8 +50,25 @@ const fetchServer = async (
       method: method.toUpperCase(),
       body: !isGetOrHead && body ? JSON.stringify(body) : undefined,
       headers: requestHeaders,
-      credentials: "include",
+      cache: "no-store",
     });
+
+    const rawText = await response.text();
+
+    // Check if the server returned HTML instead of JSON
+    let parsedData;
+    try {
+      parsedData = JSON.parse(rawText);
+    } catch (parseErr) {
+      console.error(
+        `⚠️ [fetchServer] Server returned HTML (Status ${response.status}) instead of JSON for ${endpoint}. Is the new route deployed on the live server?`
+      );
+      return JSON.stringify({
+        success: false,
+        data: [],
+        message: `Endpoint ${endpoint} returned status ${response.status}. Please ensure this route is deployed on the backend server.`,
+      });
+    }
 
     const setCookieHeader = response.headers.get("set-cookie");
     if (setCookieHeader && expectCookie) {
@@ -69,13 +89,13 @@ const fetchServer = async (
       }
     }
 
-    const parsedData = await response.json();
     return JSON.stringify(parsedData);
   } catch (error) {
-    console.error(`❌ [fetchServer] Error on ${fullUrl}:`, error.message);
+    console.error(`❌ [fetchServer] Failed to reach ${fullUrl}:`, error.message);
     return JSON.stringify({
       success: false,
-      message: "Could not communicate with backend server.",
+      data: [],
+      message: `Could not connect to ${fullUrl}.`,
     });
   }
 };
