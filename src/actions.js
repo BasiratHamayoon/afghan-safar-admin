@@ -2,7 +2,10 @@
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose/jwt/verify";
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+// Only bypass in local development, not in production
+if (process.env.NODE_ENV !== "production") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
 
 const fetchServer = async (
   directory,
@@ -55,18 +58,14 @@ const fetchServer = async (
 
     const rawText = await response.text();
 
-    // Check if the server returned HTML instead of JSON
     let parsedData;
     try {
       parsedData = JSON.parse(rawText);
-    } catch (parseErr) {
-      console.error(
-        `⚠️ [fetchServer] Server returned HTML (Status ${response.status}) instead of JSON for ${endpoint}. Is the new route deployed on the live server?`
-      );
+    } catch {
       return JSON.stringify({
         success: false,
         data: [],
-        message: `Endpoint ${endpoint} returned status ${response.status}. Please ensure this route is deployed on the backend server.`,
+        message: `Server returned status ${response.status}`,
       });
     }
 
@@ -91,7 +90,6 @@ const fetchServer = async (
 
     return JSON.stringify(parsedData);
   } catch (error) {
-    console.error(`❌ [fetchServer] Failed to reach ${fullUrl}:`, error.message);
     return JSON.stringify({
       success: false,
       data: [],
@@ -125,7 +123,7 @@ const getDetailsFromAuthToken = async () => {
       { algorithms: ["HS256"] }
     );
     return payload;
-  } catch (error) {
+  } catch {
     return false;
   }
 };
