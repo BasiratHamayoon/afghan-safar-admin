@@ -15,18 +15,28 @@ export default function SignInForm() {
   const { signIn } = useContext(ContextAdmin);
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+
   const [state, action, isPending] = useActionState(async (st, formData) => {
-    const data = {
-      email: formData.get("email"),
-      password: formData.get("password"),
-    };
-    const res = await signIn(data);
-    if (res.success) {
-      router.push("/");
-    } else {
-      return res?.msg;
+    try {
+      const data = {
+        email: formData.get("email")?.toString().trim().toLowerCase(),
+        password: formData.get("password")?.toString().trim(),
+      };
+
+      const res = await signIn(data);
+
+      if (res?.success) {
+        // Full navigation forces cookies to load cleanly on Vercel deployment
+        window.location.href = "/";
+        return null;
+      } else {
+        return res?.msg || res?.message || "Invalid email or password.";
+      }
+    } catch (err) {
+      console.error("Sign-in error:", err);
+      return "Unable to connect to server. Please try again.";
     }
-  });
+  }, null);
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
@@ -158,7 +168,7 @@ export default function SignInForm() {
 
                 <div>
                   <Button disabled={isPending} className="w-full" size="sm">
-                    Sign in
+                    {isPending ? "Signing in..." : "Sign in"}
                   </Button>
                 </div>
               </div>
