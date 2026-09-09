@@ -2,7 +2,6 @@
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose/jwt/verify";
 
-// Only bypass in local development, not in production
 if (process.env.NODE_ENV !== "production") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
@@ -69,16 +68,30 @@ const fetchServer = async (
       });
     }
 
-    const setCookieHeader = response.headers.get("set-cookie");
-    if (setCookieHeader && expectCookie) {
-      const authCookieMatch = setCookieHeader.match(/authorization=([^;]+)/);
-      if (authCookieMatch && authCookieMatch[1]) {
-        let authValue = decodeURIComponent(authCookieMatch[1]);
-        if (authValue.startsWith("s:")) {
-          authValue = authValue.slice(2).split(".")[0];
-        }
+    // Capture token from EITHER the Set-Cookie header OR the JSON response body
+    if (expectCookie) {
+      let tokenToStore = null;
 
-        cookieStore.set("authorization", authValue, {
+      // 1. Try extracting from Set-Cookie header
+      const setCookieHeader = response.headers.get("set-cookie");
+      if (setCookieHeader) {
+        const authCookieMatch = setCookieHeader.match(/authorization=([^;]+)/);
+        if (authCookieMatch && authCookieMatch[1]) {
+          tokenToStore = decodeURIComponent(authCookieMatch[1]);
+          if (tokenToStore.startsWith("s:")) {
+            tokenToStore = tokenToStore.slice(2).split(".")[0];
+          }
+        }
+      }
+
+      // 2. Fallback: Extract from JSON body if header extraction missed it
+      if (!tokenToStore && (parsedData?.temp || parsedData?.token)) {
+        tokenToStore = parsedData.temp || parsedData.token;
+      }
+
+      // 3. Save the cookie reliably
+      if (tokenToStore) {
+        cookieStore.set("authorization", tokenToStore, {
           maxAge: 86400000 * 15,
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -93,7 +106,7 @@ const fetchServer = async (
     return JSON.stringify({
       success: false,
       data: [],
-      message: `Could not connect to ${fullUrl}.`,
+      message: `Could not connect to server.`,
     });
   }
 };
@@ -116,7 +129,10 @@ const getDetailsFromAuthToken = async () => {
     }
 
     const secretKey =
-      process.env.NEXT_PUBLIC_SECRET_KEY || process.env.SECRET_KEY;
+      process.env.NEXT_PUBLIC_SECRET_KEY ||
+      process.env.SECRET_KEY ||
+      "22c79e4b-dfbe-4f8c-a2cb-4e6b5d04f6f4";
+
     const { payload } = await jwtVerify(
       authToken,
       new TextEncoder().encode(secretKey),
