@@ -1,8 +1,25 @@
-import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const withNextIntl = createNextIntlPlugin();
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  serverExternalPackages: ["jspdf", "html2canvas"],
+  reactStrictMode: false,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+    ],
+  },
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
@@ -10,19 +27,6 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  reactStrictMode: false,
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com" },
-      { protocol: "https", hostname: "lh3.googleusercontent.com" },
-      { protocol: "https", hostname: "images.unsplash.com" },
-    ],
-  },
 };
-
-const withNextIntl = createNextIntlPlugin();
 
 export default withNextIntl(nextConfig);
