@@ -6,6 +6,21 @@ if (process.env.NODE_ENV !== "production") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
+function cleanToken(rawToken) {
+  if (!rawToken) return null;
+  let token = decodeURIComponent(rawToken).trim();
+  if (token.startsWith('"') && token.endsWith('"')) {
+    token = token.slice(1, -1);
+  }
+  if (token.startsWith("s:")) {
+    token = token.slice(2).split(".")[0];
+  }
+  if (token.startsWith("Bearer ")) {
+    token = token.slice(7).trim();
+  }
+  return token;
+}
+
 const fetchServer = async (
   directory,
   method = "GET",
@@ -24,14 +39,8 @@ const fetchServer = async (
 
   try {
     const cookieStore = await cookies();
-    let token = cookieStore.get("authorization")?.value;
-
-    if (token) {
-      token = decodeURIComponent(token);
-      if (token.startsWith("s:")) {
-        token = token.slice(2).split(".")[0];
-      }
-    }
+    const rawToken = cookieStore.get("authorization")?.value;
+    const token = cleanToken(rawToken);
 
     const requestHeaders = {
       Accept: "application/json, text/plain, */*",
@@ -42,7 +51,7 @@ const fetchServer = async (
     };
 
     if (sendAuthToken && token) {
-      requestHeaders["Authorization"] = `Bearer ${token.trim()}`;
+      requestHeaders["Authorization"] = `Bearer ${token}`;
     }
 
     const isGetOrHead =
@@ -68,30 +77,33 @@ const fetchServer = async (
       });
     }
 
-    // Capture token from EITHER the Set-Cookie header OR the JSON response body
+    // Capture & save cookie reliably across Vercel and local environments
     if (expectCookie) {
-      let tokenToStore = null;
+      let tokenToSave = null;
 
-      // 1. Try extracting from Set-Cookie header
-      const setCookieHeader = response.headers.get("set-cookie");
-      if (setCookieHeader) {
-        const authCookieMatch = setCookieHeader.match(/authorization=([^;]+)/);
-        if (authCookieMatch && authCookieMatch[1]) {
-          tokenToStore = decodeURIComponent(authCookieMatch[1]);
-          if (tokenToStore.startsWith("s:")) {
-            tokenToStore = tokenToStore.slice(2).split(".")[0];
+      // Check all Set-Cookie headers
+      const setCookies =
+        typeof response.headers.getSetCookie === "function"
+          ? response.headers.getSetCookie()
+          : [response.headers.get("set-cookie")];
+
+      for (const cookieStr of setCookies) {
+        if (cookieStr && cookieStr.includes("authorization=")) {
+          const match = cookieStr.match(/authorization=([^;]+)/);
+          if (match && match[1]) {
+            tokenToSave = cleanToken(match[1]);
+            break;
           }
         }
       }
 
-      // 2. Fallback: Extract from JSON body if header extraction missed it
-      if (!tokenToStore && (parsedData?.temp || parsedData?.token)) {
-        tokenToStore = parsedData.temp || parsedData.token;
+      // Fallback: Check JSON body
+      if (!tokenToSave && (parsedData?.temp || parsedData?.token)) {
+        tokenToSave = cleanToken(parsedData.temp || parsedData.token);
       }
 
-      // 3. Save the cookie reliably
-      if (tokenToStore) {
-        cookieStore.set("authorization", tokenToStore, {
+      if (tokenToSave) {
+        cookieStore.set("authorization", tokenToSave, {
           maxAge: 86400000 * 15,
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -106,7 +118,7 @@ const fetchServer = async (
     return JSON.stringify({
       success: false,
       data: [],
-      message: `Could not connect to server.`,
+      message: "Could not connect to server.",
     });
   }
 };
@@ -120,13 +132,9 @@ const logout = async () => {
 const getDetailsFromAuthToken = async () => {
   try {
     const cookieStore = await cookies();
-    let authToken = cookieStore.get("authorization")?.value;
-    if (!authToken) return false;
-
-    authToken = decodeURIComponent(authToken);
-    if (authToken.startsWith("s:")) {
-      authToken = authToken.slice(2).split(".")[0];
-    }
+    const rawToken = cookieStore.get("authorization")?.value;
+    const token = cleanToken(rawToken);
+    if (!token) return false;
 
     const secretKey =
       process.env.NEXT_PUBLIC_SECRET_KEY ||
@@ -134,7 +142,7 @@ const getDetailsFromAuthToken = async () => {
       "22c79e4b-dfbe-4f8c-a2cb-4e6b5d04f6f4";
 
     const { payload } = await jwtVerify(
-      authToken,
+      token,
       new TextEncoder().encode(secretKey),
       { algorithms: ["HS256"] }
     );
