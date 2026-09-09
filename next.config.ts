@@ -2,22 +2,28 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
-  // 1. Ignore TypeScript type-checking errors during Vercel deployment
+  // 1. Ignore TypeScript & ESLint blockers on Vercel
   typescript: {
     ignoreBuildErrors: true,
   },
-
-  // 2. Ignore ESLint errors during Vercel deployment
   eslint: {
     ignoreDuringBuilds: true,
   },
 
-  // 3. Exclude heavy client-side libraries from bloating serverless bundle size
+  // 2. Prevent jspdf and html2canvas from crashing serverless memory during build
   serverExternalPackages: ["jspdf", "html2canvas"],
 
   reactStrictMode: false,
 
-  // 4. Allowed image sources
+  // 3. Optimize bundle memory during Vercel builds
+  experimental: {
+    webpackBuildWorker: true,
+    serverActions: {
+      bodySizeLimit: "5mb",
+    },
+  },
+
+  // 4. Remote Image Domains
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
@@ -27,7 +33,7 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // 5. SVG loader support via SVGR
+  // 5. SVG Loader
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,

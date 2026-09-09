@@ -4,7 +4,6 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import Button from "@/components/ui/button/Button";
 import { BoxIcon } from "@/icons";
 
-// Page metadata for Next.js App Router SEO
 export const metadata = {
   title: "Buttons | Afghan Safar Admin",
   description: "Buttons component showcase for Afghan Safar Admin Panel",
