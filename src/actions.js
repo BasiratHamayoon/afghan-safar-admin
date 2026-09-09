@@ -2,9 +2,8 @@
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose/jwt/verify";
 
-if (process.env.NODE_ENV !== "production") {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-}
+// 🚀 Must run in all environments until backend installs proper SSL certificate
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 function cleanToken(rawToken) {
   if (!rawToken) return null;
@@ -77,11 +76,9 @@ const fetchServer = async (
       });
     }
 
-    // Capture & save cookie reliably across Vercel and local environments
     if (expectCookie) {
       let tokenToSave = null;
 
-      // Check all Set-Cookie headers
       const setCookies =
         typeof response.headers.getSetCookie === "function"
           ? response.headers.getSetCookie()
@@ -97,7 +94,6 @@ const fetchServer = async (
         }
       }
 
-      // Fallback: Check JSON body
       if (!tokenToSave && (parsedData?.temp || parsedData?.token)) {
         tokenToSave = cleanToken(parsedData.temp || parsedData.token);
       }
@@ -115,10 +111,11 @@ const fetchServer = async (
 
     return JSON.stringify(parsedData);
   } catch (error) {
+    console.error(`❌ [fetchServer] Error on ${fullUrl}:`, error.message);
     return JSON.stringify({
       success: false,
       data: [],
-      message: "Could not connect to server.",
+      message: `Could not connect to server: ${error.message}`,
     });
   }
 };
