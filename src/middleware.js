@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { jwtVerify } from "jose/jwt/verify";
 
 // Safe, Edge-compatible JWT verification
 async function jwtVerifyer(token) {

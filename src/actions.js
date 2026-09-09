@@ -1,6 +1,6 @@
 "use server";
 import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
+import { jwtVerify } from "jose/jwt/verify";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
