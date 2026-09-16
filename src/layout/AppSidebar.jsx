@@ -188,12 +188,21 @@ const AppSidebar = ({ locale }) => {
           subItems: [
             { name: getTrans("Hotels", "Hotels"), path: "/hotels" },
             { name: getTrans("Add Hotel", "Add Hotel"), path: "/add-hotel" },
+            { name: getTrans("Add Room", "Add Room"), path: "/add-room" },
           ],
         },
         {
           name: getTrans("Hotel Bookings", "Hotel Bookings"),
           icon: <BookedTickets />,
           path: "/hotel-bookings",
+        },
+        {
+          name: getTrans("Banners", "Banners"),
+          icon: <Ads />,
+          subItems: [
+            { name: getTrans("Banners", "Banners"), path: "/banners" },
+            { name: getTrans("Add Banner", "Add Banner"), path: "/add-banner" },
+          ],
         },
         {
           name: getTrans("Ads", "Ads"),

@@ -18,102 +18,24 @@ const safeParse = (data) => {
 };
 
 function MainStateAdmin({ children }) {
-  // ─── 1. ALL REACT HOOKS DECLARED ONCE AT THE VERY TOP ───
   const [loading, setloading] = useState(false);
   const [tempAuthtoken, settempAuthtoken] = useState(null);
   const [userDetails, callerFunc, error] = useUserDetails();
-  
-  const [userCardsData, setuserCardsData] = useState({
-    data: [],
-    start: 0,
-    end: 40,
-    allDone: false,
-    stats: {},
-  });
-  const [moderatorsCardsData, setModeratorsCardsData] = useState({
-    data: [],
-    start: 0,
-    end: 10,
-    allDone: false,
-  });
-  const [driversCardsData, setDriversCardsData] = useState({
-    data: [],
-    start: 0,
-    end: 10,
-    allDone: false,
-  });
-  const [travelAgentsCardsData, settravelAgentsCardsData] = useState({
-    data: [],
-    start: 0,
-    end: 10,
-    allDone: false,
-  });
-  const [companyCards, setCompanyCards] = useState({
-    data: [],
-    start: 0,
-    end: 30,
-    allDone: false,
-  });
-  const [transporationsCards, setTransporationsCards] = useState({
-    data: [],
-    start: 0,
-    end: 30,
-    allDone: false,
-    stats: {},
-  });
-  const [bookedTickets, setBookedTickets] = useState({
-    data: [],
-    start: 0,
-    end: 40,
-    allDone: false,
-    stats: {},
-  });
-  const [adsCard, setAdsCard] = useState({
-    data: [],
-    start: 0,
-    end: 40,
-    allDone: false,
-  });
-  const [bgAdsCard, setBgAdsCard] = useState({
-    data: [],
-    start: 0,
-    end: 40,
-    allDone: false,
-  });
-  const [contactCards, setcontactCards] = useState({
-    data: [],
-    start: 0,
-    end: 50,
-    allDone: false,
-    stats: {},
-  });
-  
-  // Destinations State
-  const [destinationsCardsData, setDestinationsCardsData] = useState({
-    data: [],
-    start: 0,
-    end: 30,
-    allDone: false,
-    stats: {},
-  });
 
-  // Hotels State
-  const [hotelsCardsData, setHotelsCardsData] = useState({
-    data: [],
-    start: 0,
-    end: 30,
-    allDone: false,
-    stats: {},
-  });
-
-  // Hotel Bookings State
-  const [hotelBookingsData, setHotelBookingsData] = useState({
-    data: [],
-    start: 0,
-    end: 30,
-    allDone: false,
-    stats: {},
-  });
+  const [userCardsData, setuserCardsData] = useState({ data: [], start: 0, end: 40, allDone: false, stats: {} });
+  const [moderatorsCardsData, setModeratorsCardsData] = useState({ data: [], start: 0, end: 10, allDone: false });
+  const [driversCardsData, setDriversCardsData] = useState({ data: [], start: 0, end: 10, allDone: false });
+  const [travelAgentsCardsData, settravelAgentsCardsData] = useState({ data: [], start: 0, end: 10, allDone: false });
+  const [companyCards, setCompanyCards] = useState({ data: [], start: 0, end: 30, allDone: false });
+  const [transporationsCards, setTransporationsCards] = useState({ data: [], start: 0, end: 30, allDone: false, stats: {} });
+  const [bookedTickets, setBookedTickets] = useState({ data: [], start: 0, end: 40, allDone: false, stats: {} });
+  const [adsCard, setAdsCard] = useState({ data: [], start: 0, end: 40, allDone: false });
+  const [bgAdsCard, setBgAdsCard] = useState({ data: [], start: 0, end: 40, allDone: false });
+  const [contactCards, setcontactCards] = useState({ data: [], start: 0, end: 50, allDone: false, stats: {} });
+  const [destinationsCardsData, setDestinationsCardsData] = useState({ data: [], start: 0, end: 30, allDone: false, stats: {} });
+  const [hotelsCardsData, setHotelsCardsData] = useState({ data: [], start: 0, end: 30, allDone: false, stats: {} });
+  const [hotelBookingsData, setHotelBookingsData] = useState({ data: [], start: 0, end: 30, allDone: false, stats: {} });
+  const [bannersData, setBannersData] = useState({ data: [], start: 0, end: 30, allDone: false });
 
   const [dashboardData, setdashboardData] = useState(false);
   const [companyUser, setcompanyUser] = useState(null);
@@ -128,16 +50,8 @@ function MainStateAdmin({ children }) {
     }
   }, [userDetails]);
 
-  // ─── 2. HELPER FUNCTIONS & API CALL METHODS ───
   const url = process.env.NEXT_PUBLIC_SERVER_URL;
-  const useFetch = async (
-    dirctory,
-    method,
-    body,
-    headers,
-    authToken,
-    loadFunc
-  ) => {
+  const useFetch = async (dirctory, method, body, headers, authToken, loadFunc) => {
     try {
       loadFunc && loadFunc(true);
       const data = await fetch(url + dirctory, {
@@ -162,39 +76,21 @@ function MainStateAdmin({ children }) {
   const signIn = async (args) => {
     const raw = await fetchServer("/admin/login", "POST", args, {}, false, true);
     const parsedData = safeParse(raw);
-
-    if (parsedData?.success && parsedData?.temp) {
-      settempAuthtoken(parsedData.temp);
-    }
-    if (typeof callerFunc === "function") {
-      await callerFunc();
-    }
+    if (parsedData?.success && parsedData?.temp) settempAuthtoken(parsedData.temp);
+    if (typeof callerFunc === "function") await callerFunc();
     return parsedData;
   };
 
   const updateAdminDetails = async (args) => {
     const raw = await fetchServer(
-      companyUser
-        ? "/transport_company_user/edit-profile"
-        : "/admin/edit-profile",
-      "POST",
-      args,
-      {},
-      true,
-      true
+      companyUser ? "/transport_company_user/edit-profile" : "/admin/edit-profile",
+      "POST", args, {}, true, true
     );
     return safeParse(raw);
   };
 
   const addUserToCompany = async (args) => {
-    const raw = await fetchServer(
-      "/admin/add-transport-company-user",
-      "POST",
-      args,
-      {},
-      true,
-      false
-    );
+    const raw = await fetchServer("/admin/add-transport-company-user", "POST", args, {}, true, false);
     return safeParse(raw);
   };
 
@@ -218,253 +114,127 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  const getUsersData = async (
-    filter,
-    start = userCardsData.start,
-    end = userCardsData.end
-  ) => {
+  const getUsersData = async (filter, start = userCardsData.start, end = userCardsData.end) => {
     if (userCardsData.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/get-users",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/get-users", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setuserCardsData((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 40,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 40, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
-  const getModeratorsData = async (
-    filter,
-    start = moderatorsCardsData.start,
-    end = moderatorsCardsData.end
-  ) => {
+  const getModeratorsData = async (filter, start = moderatorsCardsData.start, end = moderatorsCardsData.end) => {
     if (moderatorsCardsData.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/get-users",
-      "POST",
-      { start, end, role: "moderator", useRoleForStats: true, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/get-users", "POST", { start, end, role: "moderator", useRoleForStats: true, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setModeratorsCardsData((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 10,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 10, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
-  const getDriversData = async (
-    filter,
-    start = driversCardsData.start,
-    end = driversCardsData.end
-  ) => {
+  const getDriversData = async (filter, start = driversCardsData.start, end = driversCardsData.end) => {
     if (driversCardsData.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/get-users",
-      "POST",
-      { start, end, role: "driver", useRoleForStats: true, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/get-users", "POST", { start, end, role: "driver", useRoleForStats: true, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setDriversCardsData((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 10,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 10, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
-  const getTravelAgentsData = async (
-    filter,
-    start = travelAgentsCardsData.start,
-    end = travelAgentsCardsData.end
-  ) => {
+  const getTravelAgentsData = async (filter, start = travelAgentsCardsData.start, end = travelAgentsCardsData.end) => {
     if (travelAgentsCardsData.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/get-users",
-      "POST",
-      { start, end, role: "travel_agent", useRoleForStats: true, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/get-users", "POST", { start, end, role: "travel_agent", useRoleForStats: true, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       settravelAgentsCardsData((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 10,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 10, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
-  const getCompanyCards = async (
-    filter,
-    start = companyCards.start,
-    end = companyCards.end
-  ) => {
+  const getCompanyCards = async (filter, start = companyCards.start, end = companyCards.end) => {
     if (companyCards.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/get-transportation-companies",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/get-transportation-companies", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setCompanyCards((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
-  const getTransporations = async (
-    filter,
-    start = transporationsCards.start,
-    end = transporationsCards.end
-  ) => {
+  const getTransporations = async (filter, start = transporationsCards.start, end = transporationsCards.end) => {
     if (transporationsCards.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/get-transportations",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/get-transportations", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setTransporationsCards((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
-  const getTransporationsCompanyUser = async (
-    filter,
-    start = transporationsCards.start,
-    end = transporationsCards.end
-  ) => {
+  const getTransporationsCompanyUser = async (filter, start = transporationsCards.start, end = transporationsCards.end) => {
     if (transporationsCards.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/transport_company_user/get-transportations",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/transport_company_user/get-transportations", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setTransporationsCards((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
-  const getAdsData = async (
-    filter,
-    start = adsCard.start,
-    end = adsCard.end
-  ) => {
+  const getAdsData = async (filter, start = adsCard.start, end = adsCard.end) => {
     if (adsCard.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/get-ads",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/get-ads", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setAdsCard((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 40,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 40, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
-  const getBgAdsData = async (
-    filter,
-    start = bgAdsCard.start,
-    end = bgAdsCard.end
-  ) => {
+  const getBgAdsData = async (filter, start = bgAdsCard.start, end = bgAdsCard.end) => {
     if (bgAdsCard.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/get-bg-ads",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/get-bg-ads", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setBgAdsCard((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 40,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 40, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
@@ -573,29 +343,15 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  const getBookedTickets = async (
-    filter,
-    start = bookedTickets.start,
-    end = bookedTickets.end
-  ) => {
+  const getBookedTickets = async (filter, start = bookedTickets.start, end = bookedTickets.end) => {
     if (bookedTickets.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/admin/ticket-bookings",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/admin/ticket-bookings", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setBookedTickets((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
@@ -628,55 +384,35 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  const getContactCards = async (
-    start = contactCards.start,
-    end = contactCards.end
-  ) => {
+  const getContactCards = async (start = contactCards.start, end = contactCards.end) => {
     if (contactCards.allDone && loading) return null;
     setloading(true);
     const raw = await fetchServer("/admin/get-contacts", "POST", { start, end }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setcontactCards((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 40,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 40, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
   const editTransportation = async (args) => {
-    const endpoint = companyUser
-      ? "/transport_company_user/edit-transportation"
-      : "/admin/edit-transportation";
+    const endpoint = companyUser ? "/transport_company_user/edit-transportation" : "/admin/edit-transportation";
     const raw = await fetchServer(endpoint, "POST", args, {}, true, false);
     return safeParse(raw);
   };
 
-  //-------------------- transport company user --------------------
-
   const getDashboard = async () => {
     const stats = safeParse(localStorage.getItem("dashboardStats"));
-
-    if (
-      !stats ||
-      new Date() >
-        new Date(new Date(stats?.lastFetch).getTime() + 1 * 60 * 60 * 1000)
-    ) {
+    if (!stats || new Date() > new Date(new Date(stats?.lastFetch).getTime() + 1 * 60 * 60 * 1000)) {
       setloading(true);
       const raw = await fetchServer("/admin/dashboard-stats", "GET", false, {}, true);
       const res = safeParse(raw);
       setloading(false);
-
       if (res?.success) {
-        localStorage.setItem(
-          "dashboardStats",
-          JSON.stringify({ lastFetch: new Date(), data: res.stats })
-        );
+        localStorage.setItem("dashboardStats", JSON.stringify({ lastFetch: new Date(), data: res.stats }));
       }
       return res?.stats;
     }
@@ -685,22 +421,13 @@ function MainStateAdmin({ children }) {
 
   const getDashboardTransport = async () => {
     const stats = safeParse(localStorage.getItem("dashboardStats"));
-
-    if (
-      !stats ||
-      new Date() >
-        new Date(new Date(stats?.lastFetch).getTime() + 1 * 60 * 60 * 1000)
-    ) {
+    if (!stats || new Date() > new Date(new Date(stats?.lastFetch).getTime() + 1 * 60 * 60 * 1000)) {
       setloading(true);
       const raw = await fetchServer("/transport_company_user/dashboard-stats", "GET", false, {}, true);
       const res = safeParse(raw);
       setloading(false);
-
       if (res?.success) {
-        localStorage.setItem(
-          "dashboardStats",
-          JSON.stringify({ lastFetch: new Date(), data: res.stats })
-        );
+        localStorage.setItem("dashboardStats", JSON.stringify({ lastFetch: new Date(), data: res.stats }));
       }
       return res?.stats;
     }
@@ -712,59 +439,31 @@ function MainStateAdmin({ children }) {
     const raw = await fetchServer("/transport_company_user/company-details", "GET", false, {}, true);
     const res = safeParse(raw);
     setloading(false);
-
     if (res?.success) setcompanyDetails(res.data);
     return res;
   };
 
   const addTransportationCompany = async (args) => {
-    const raw = await fetchServer(
-      "/transport_company_user/add-transportation",
-      "POST",
-      args,
-      {},
-      true,
-      false
-    );
+    const raw = await fetchServer("/transport_company_user/add-transportation", "POST", args, {}, true, false);
     return safeParse(raw);
   };
 
-  const getBookedTicketsOfCompany = async (
-    filter,
-    start = bookedTickets.start,
-    end = bookedTickets.end
-  ) => {
+  const getBookedTicketsOfCompany = async (filter, start = bookedTickets.start, end = bookedTickets.end) => {
     if (bookedTickets.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/transport_company_user/ticket-bookings",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/transport_company_user/ticket-bookings", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setBookedTickets((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
   const sendNotificationCompanyUser = async (args) => {
-    const raw = await fetchServer(
-      "/notifications/send-notifications-companyUsers",
-      "POST",
-      args,
-      {},
-      true
-    );
+    const raw = await fetchServer("/notifications/send-notifications-companyUsers", "POST", args, {}, true);
     return safeParse(raw);
   };
 
@@ -775,54 +474,30 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  //-------------------- travel agent --------------------
   const getDashboardTravelAgent = async () => {
     const stats = safeParse(localStorage.getItem("dashboardStatsTravelAgent"));
-
-    if (
-      !stats ||
-      new Date() >
-        new Date(new Date(stats?.lastFetch).getTime() + 1 * 60 * 60 * 1000)
-    ) {
+    if (!stats || new Date() > new Date(new Date(stats?.lastFetch).getTime() + 1 * 60 * 60 * 1000)) {
       setloading(true);
       const raw = await fetchServer("/travel_agent/dashboard-stats", "GET", false, {}, true);
       const res = safeParse(raw);
       setloading(false);
-
       if (res?.success) {
-        localStorage.setItem(
-          "dashboardStatsTravelAgent",
-          JSON.stringify({ lastFetch: new Date(), data: res.stats })
-        );
+        localStorage.setItem("dashboardStatsTravelAgent", JSON.stringify({ lastFetch: new Date(), data: res.stats }));
       }
       return res?.stats;
     }
     return stats.data;
   };
 
-  const getTransporationsTravelAgent = async (
-    filter,
-    start = transporationsCards.start,
-    end = transporationsCards.end
-  ) => {
+  const getTransporationsTravelAgent = async (filter, start = transporationsCards.start, end = transporationsCards.end) => {
     if (transporationsCards.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/travel_agent/get-transportations",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/travel_agent/get-transportations", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setTransporationsCards((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
@@ -836,29 +511,15 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  const getBookedTicketsTravelAgent = async (
-    filter,
-    start = bookedTickets.start,
-    end = bookedTickets.end
-  ) => {
+  const getBookedTicketsTravelAgent = async (filter, start = bookedTickets.start, end = bookedTickets.end) => {
     if (bookedTickets.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/travel_agent/ticket-bookings",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/travel_agent/ticket-bookings", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setBookedTickets((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
@@ -866,119 +527,61 @@ function MainStateAdmin({ children }) {
 
   const getTicketDetails = async (id) => {
     setloading(true);
-    const raw = await fetchServer(
-      "/travel_agent/ticket-details?ticketId=" + id,
-      "GET",
-      false,
-      {},
-      true
-    );
+    const raw = await fetchServer("/travel_agent/ticket-details?ticketId=" + id, "GET", false, {}, true);
     setloading(false);
     return safeParse(raw);
   };
 
-  //-------------------- destinations --------------------
-  const getDestinationsData = async (
-    filter,
-    start = destinationsCardsData.start,
-    end = destinationsCardsData.end
-  ) => {
+  // ─── DESTINATIONS ───
+  const getDestinationsData = async (filter, start = destinationsCardsData.start, end = destinationsCardsData.end) => {
     if (destinationsCardsData.allDone && loading) return null;
     setloading(true);
-    const raw = await fetchServer(
-      "/destinations/get-destinations",
-      "POST",
-      { start, end, ...filter },
-      {},
-      true
-    );
+    const raw = await fetchServer("/destinations/get-destinations", "POST", { start, end, ...filter }, {}, true);
     const res = safeParse(raw);
     if (res?.data) {
       setDestinationsCardsData((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
   };
 
   const addDestination = async (args) => {
-    const raw = await fetchServer(
-      "/destinations/add-destination",
-      "POST",
-      args,
-      {},
-      true,
-      false
-    );
+    const raw = await fetchServer("/destinations/add-destination", "POST", args, {}, true, false);
     return safeParse(raw);
   };
 
   const editDestination = async (args) => {
-    const raw = await fetchServer(
-      "/destinations/edit-destination",
-      "POST",
-      args,
-      {},
-      true,
-      false
-    );
+    const raw = await fetchServer("/destinations/edit-destination", "POST", args, {}, true, false);
     return safeParse(raw);
   };
 
   const deleteDestinations = async (body) => {
     setloading(true);
-    const raw = await fetchServer(
-      "/destinations/bulk-delete",
-      "DELETE",
-      body,
-      {},
-      true
-    );
+    const raw = await fetchServer("/destinations/bulk-delete", "DELETE", body, {}, true);
     setloading(false);
     return safeParse(raw);
   };
 
   const fetchDestinationById = async (id) => {
     setloading(true);
-    const raw = await fetchServer(
-      "/destinations/" + id,
-      "GET",
-      false,
-      {},
-      true
-    );
+    const raw = await fetchServer("/destinations/" + id, "GET", false, {}, true);
     setloading(false);
     return safeParse(raw);
   };
 
   const setDestinationRecommendation = async (args) => {
-    const raw = await fetchServer(
-      "/destinations/set-recommendation",
-      "POST",
-      args,
-      {},
-      true
-    );
+    const raw = await fetchServer("/destinations/set-recommendation", "POST", args, {}, true);
     return safeParse(raw);
   };
 
   const removeDestinationRecommendation = async (id) => {
-    const raw = await fetchServer(
-      "/destinations/remove-recommendation/" + id,
-      "DELETE",
-      false,
-      {},
-      true
-    );
+    const raw = await fetchServer("/destinations/remove-recommendation/" + id, "DELETE", false, {}, true);
     return safeParse(raw);
   };
 
-  // ─── HOTELS API FUNCTIONS ───
+  // ─── HOTELS ───
   const getHotelsData = async (filter, start = hotelsCardsData.start, end = hotelsCardsData.end) => {
     if (hotelsCardsData.allDone && loading) return null;
     setloading(true);
@@ -986,12 +589,8 @@ function MainStateAdmin({ children }) {
     const res = safeParse(raw);
     if (res?.data) {
       setHotelsCardsData((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
@@ -1031,7 +630,54 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
-  // ─── HOTEL BOOKINGS API FUNCTIONS ───
+  // ─── ROOMS ───
+  const addRoomToHotel = async (hotelId, args) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/" + hotelId + "/add-room", "POST", args, {}, true, false);
+    setloading(false);
+    return safeParse(raw);
+  };
+
+  const editRoom = async (args) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/edit-room", "POST", args, {}, true, false);
+    setloading(false);
+    return safeParse(raw);
+  };
+
+  const deleteRoom = async (roomId) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/delete-room/" + roomId, "DELETE", false, {}, true);
+    setloading(false);
+    return safeParse(raw);
+  };
+
+  // ─── fetchRoomById: Finds room across all hotels ───
+  const fetchRoomById = async (roomId) => {
+    setloading(true);
+    try {
+      const raw = await fetchServer("/hotels/get-hotels", "POST", { start: 0, end: 100 }, {}, true);
+      const res = safeParse(raw);
+      if (res?.data) {
+        for (const hotel of res.data) {
+          const hotelRaw = await fetchServer("/hotels/" + hotel._id, "GET", false, {}, true);
+          const hotelData = safeParse(hotelRaw);
+          const foundRoom = hotelData?.data?.rooms?.find((r) => r._id === roomId);
+          if (foundRoom) {
+            setloading(false);
+            return { success: true, data: foundRoom, hotelId: hotel._id };
+          }
+        }
+      }
+      setloading(false);
+      return { success: false, message: "Room not found" };
+    } catch (err) {
+      setloading(false);
+      return { success: false, message: err.message };
+    }
+  };
+
+  // ─── HOTEL BOOKINGS ───
   const getHotelBookingsData = async (filter, start = hotelBookingsData.start, end = hotelBookingsData.end) => {
     if (hotelBookingsData.allDone && loading) return null;
     setloading(true);
@@ -1039,12 +685,8 @@ function MainStateAdmin({ children }) {
     const res = safeParse(raw);
     if (res?.data) {
       setHotelBookingsData((e) => ({
-        ...e,
-        data: [...e.data, ...res.data],
-        allDone: res?.allDone,
-        start: e.end,
-        end: e.end + 30,
-        stats: e.start === 0 ? res.stats : e.stats,
+        ...e, data: [...e.data, ...res.data], allDone: res?.allDone,
+        start: e.end, end: e.end + 30, stats: e.start === 0 ? res.stats : e.stats,
       }));
     }
     setloading(false);
@@ -1062,118 +704,88 @@ function MainStateAdmin({ children }) {
     return safeParse(raw);
   };
 
+  // ─── BANNERS ───
+  const getBanners = async (showAll = true, page = 1, limit = 30) => {
+    setloading(true);
+    const raw = await fetchServer(
+      `/hotels/banners?all=${showAll}&page=${page}&limit=${limit}`,
+      "GET", false, {}, true
+    );
+    const res = safeParse(raw);
+    if (res?.data) {
+      setBannersData((e) => ({ ...e, data: res.data, allDone: true }));
+    }
+    setloading(false);
+    return res;
+  };
+
+  const createBanner = async (args) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/banners", "POST", args, {}, true, false);
+    setloading(false);
+    return safeParse(raw);
+  };
+
+  const editBanner = async (args) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/banners/edit", "POST", args, {}, true, false);
+    setloading(false);
+    return safeParse(raw);
+  };
+
+  const deleteBanner = async (id) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/banners/" + id, "DELETE", false, {}, true);
+    setloading(false);
+    return safeParse(raw);
+  };
+
+  const fetchBannerById = async (id) => {
+    setloading(true);
+    const raw = await fetchServer("/hotels/banners/" + id, "GET", false, {}, true);
+    setloading(false);
+    return safeParse(raw);
+  };
+
   return (
     <ContextAdmin.Provider
       value={{
-        signIn,
-        loading,
-        setloading,
-        tempAuthtoken,
-        settempAuthtoken,
-        userDetails,
-        updateAdminDetails,
-        callerFunc,
-        addUserToCompany,
-        useFetch,
-        userCardsData,
-        setuserCardsData,
-        getUsersData,
-        deleteUsers,
-        fetchUserById,
-        companyCards,
-        setCompanyCards,
-        getCompanyCards,
-        fetchCompanyById,
-        getModeratorsData,
-        moderatorsCardsData,
-        getDriversData,
-        driversCardsData,
-        getTransporations,
-        transporationsCards,
-        addModerator,
-        addDriver,
-        addTransportation,
-        fetchTransportationById,
-        createAd,
-        adsCard,
-        setAdsCard,
-        getAdsData,
-        getUserBookedTickets,
-        blockUsers,
-        deleteCompanies,
-        setModeratorsCardsData,
-        setTransporationsCards,
-        deleteTransportations,
-        deleteAds,
-        blockAds,
-        getDashboard,
-        dashboardData,
-        setdashboardData,
-        companyUser,
-        getDashboardTransport,
-        getTransporationsCompanyUser,
-        getCompnayDetiails,
-        companyDetails,
-        addTransportationCompany,
-        getBookedTickets,
-        bookedTickets,
-        setBookedTickets,
-        sendNotification,
-        sendWebNotification,
-        getBookedTicketsOfCompany,
-        sendNotificationCompanyUser,
-        getSpecificTicketDetails,
-        getNotificationsCompany,
-        getNotificationsModerator,
-        bgAdsCard,
-        getBgAdsData,
-        setBgAdsCard,
-        bgCreateAd,
-        deleteBookings,
-        setDriversCardsData,
-        deleteBGAds,
-        contactCards,
-        setcontactCards,
-        getContactCards,
-        editTransportation,
-        travelAgentsCardsData,
-        settravelAgentsCardsData,
-        getTravelAgentsData,
-        addTravelAgent,
-        travelAgent,
-        getTransporationsTravelAgent,
-        bookTicket,
-        getBookedTicketsTravelAgent,
-        getDashboardTravelAgent,
-        getTicketDetails,
-        ticket,
-        setTicket,
+        signIn, loading, setloading, tempAuthtoken, settempAuthtoken, userDetails,
+        updateAdminDetails, callerFunc, addUserToCompany, useFetch,
+        userCardsData, setuserCardsData, getUsersData, deleteUsers, fetchUserById,
+        companyCards, setCompanyCards, getCompanyCards, fetchCompanyById,
+        getModeratorsData, moderatorsCardsData, getDriversData, driversCardsData,
+        getTransporations, transporationsCards, addModerator, addDriver,
+        addTransportation, fetchTransportationById, createAd, adsCard, setAdsCard,
+        getAdsData, getUserBookedTickets, blockUsers, deleteCompanies,
+        setModeratorsCardsData, setTransporationsCards, deleteTransportations,
+        deleteAds, blockAds, getDashboard, dashboardData, setdashboardData,
+        companyUser, getDashboardTransport, getTransporationsCompanyUser,
+        getCompnayDetiails, companyDetails, addTransportationCompany,
+        getBookedTickets, bookedTickets, setBookedTickets, sendNotification,
+        sendWebNotification, getBookedTicketsOfCompany, sendNotificationCompanyUser,
+        getSpecificTicketDetails, getNotificationsCompany, getNotificationsModerator,
+        bgAdsCard, getBgAdsData, setBgAdsCard, bgCreateAd, deleteBookings,
+        setDriversCardsData, deleteBGAds, contactCards, setcontactCards,
+        getContactCards, editTransportation, travelAgentsCardsData,
+        settravelAgentsCardsData, getTravelAgentsData, addTravelAgent, travelAgent,
+        getTransporationsTravelAgent, bookTicket, getBookedTicketsTravelAgent,
+        getDashboardTravelAgent, getTicketDetails, ticket, setTicket,
         // Destinations
-        destinationsCardsData,
-        setDestinationsCardsData,
-        getDestinationsData,
-        addDestination,
-        editDestination,
-        deleteDestinations,
-        fetchDestinationById,
-        setDestinationRecommendation,
-        removeDestinationRecommendation,
+        destinationsCardsData, setDestinationsCardsData, getDestinationsData,
+        addDestination, editDestination, deleteDestinations, fetchDestinationById,
+        setDestinationRecommendation, removeDestinationRecommendation,
         // Hotels
-        hotelsCardsData,
-        setHotelsCardsData,
-        getHotelsData,
-        addHotel,
-        editHotel,
-        deleteHotels,
-        fetchHotelById,
-        approveHotel,
-        rejectHotel,
+        hotelsCardsData, setHotelsCardsData, getHotelsData, addHotel, editHotel,
+        deleteHotels, fetchHotelById, approveHotel, rejectHotel,
+        // Rooms (Included fetchRoomById)
+        addRoomToHotel, editRoom, deleteRoom, fetchRoomById,
         // Hotel Bookings
-        hotelBookingsData,
-        setHotelBookingsData,
-        getHotelBookingsData,
-        updateBookingState,
-        deleteHotelBooking,
+        hotelBookingsData, setHotelBookingsData, getHotelBookingsData,
+        updateBookingState, deleteHotelBooking,
+        // Banners
+        bannersData, setBannersData, getBanners, createBanner, editBanner,
+        deleteBanner, fetchBannerById,
       }}
     >
       {children}
