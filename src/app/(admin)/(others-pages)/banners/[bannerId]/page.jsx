@@ -81,8 +81,13 @@ const page = () => {
             {gt("BannerDetailsSubtitle", "View and manage banner information")}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button size="md" onClick={openModal}>
+        {/* Buttons - Both have same fixed height (h-[35px]) */}
+        <div className="flex items-center gap-2">
+          <Button
+            size="md"
+            className="h-[35px]"
+            onClick={openModal}
+          >
             {gt("Edit", "Edit")}
           </Button>
           <Button

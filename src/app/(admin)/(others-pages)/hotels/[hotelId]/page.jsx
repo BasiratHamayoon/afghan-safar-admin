@@ -24,6 +24,7 @@ const page = () => {
   const { hotelId } = useParams();
   const { loading, fetchHotelById, editHotel, deleteHotels, companyUser } = useContext(ContextAdmin);
 
+  // Dedicated state management to prevent flickering
   const [hotel, setHotel] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
 
@@ -56,6 +57,7 @@ const page = () => {
     setHotel((prev) => ({ ...updatedHotel, rooms: prev?.rooms || updatedHotel.rooms || [] }));
   };
 
+  // 1. Show a clean, centered loader while fetching page-level data
   if (pageLoading) {
     return (
       <div className="flex h-[60vh] w-full items-center justify-center">
@@ -64,6 +66,7 @@ const page = () => {
     );
   }
 
+  // 2. Only show "NotFound" if loading has completed and no hotel exists
   if (!hotel) {
     return (
       <NotFound
@@ -89,11 +92,16 @@ const page = () => {
               {gt("HotelDetailsSubtitle", "View and manage hotel information")}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button size="md" onClick={openModal}>
+          {/* Sizing Fix: Both buttons share exact h-[35px] height and perfect flex centering */}
+          <div className="flex items-center gap-2">
+            <Button size="md" className="h-[35px]" onClick={openModal}>
               {gt("Edit", "Edit")}
             </Button>
-            <Button startIcon={<TrashBinIcon />} className="bg-error-600 h-[35px] hover:bg-error-700" onClick={openDel}>
+            <Button
+              startIcon={<TrashBinIcon />}
+              className="bg-error-600 h-[35px] hover:bg-error-700"
+              onClick={openDel}
+            >
               {gt("Delete", "Delete")}
             </Button>
           </div>
@@ -218,7 +226,9 @@ const EditForm = ({ gt, hotel, editHotel, onUpdate, closeModal }) => {
       };
       const res = await editHotel(data);
       if (res?.success) {
+        // Instant context update
         onUpdate(res.data);
+        // Clean modal close
         closeModal();
         return { success: true, msg: res.message };
       }

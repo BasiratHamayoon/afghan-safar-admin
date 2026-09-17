@@ -62,28 +62,26 @@ const page = () => {
         </h3>
       </div>
 
-      {/* KPI Stats */}
-      <div className="flex flex-col gap-[20px]">
+      {/* KPI Stats - Aligned in equal-width grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
         <StatCard
           title={gt("TotalBanners", "Total Banners")}
           value={stats.total}
           icon={<Ads />}
           color="bg-indigo-100 text-indigo-600"
         />
-        <div className="flex flex-row items-center justify-between gap-[10px] flex-wrap lg:flex-nowrap pb-[20px]">
-          <StatCard
-            title={gt("ActiveBanners", "Active")}
-            value={stats.active}
-            icon={<Ads />}
-            color="bg-green-100 text-green-600"
-          />
-          <StatCard
-            title={gt("InactiveBanners", "Inactive")}
-            value={stats.inactive}
-            icon={<Ads />}
-            color="bg-red-100 text-red-600"
-          />
-        </div>
+        <StatCard
+          title={gt("ActiveBanners", "Active")}
+          value={stats.active}
+          icon={<Ads />}
+          color="bg-green-100 text-green-600"
+        />
+        <StatCard
+          title={gt("InactiveBanners", "Inactive")}
+          value={stats.inactive}
+          icon={<Ads />}
+          color="bg-red-100 text-red-600"
+        />
       </div>
 
       {/* Filter Bar */}
