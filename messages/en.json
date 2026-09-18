@@ -767,7 +767,10 @@
     "Edit": "Edit",
     "RelatedDestinations": "Related Destinations",
     "Yes": "Yes",
-    "No": "No"
+    "No": "No",
+    "Latitude": "Latitude",
+    "Longitude": "Longitude",
+    "Add": "Add"
   },
   "hotelsPage": {
     "Hotels": "Hotels", "Add Hotel": "Add Hotel", "AddHotel": "Add Hotel",
@@ -832,7 +835,12 @@
     "Available": "Available",
     "Total": "Total",
     "ViewEdit": "View / Edit",
-    "BackToHotel": "Back to Hotel"
+    "BackToHotel": "Back to Hotel",
+    "Latitude": "Latitude",
+    "Longitude": "Longitude",
+    "WhatsApp": "WhatsApp",
+    "PetPolicy": "Pet Policy",
+    "Image360": "360° Image"
   },
   "hotelBookingsPage": {
     "HotelBookings": "Hotel Bookings",

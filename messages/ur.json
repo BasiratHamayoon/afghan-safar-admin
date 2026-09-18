@@ -656,7 +656,11 @@
     "LoadingDestinationDescription": "براہ کرم انتظار کریں جب تک منزل کی تفصیلات لوڈ ہوں۔",
     "CreatedAt": "تخلیق کی تاریخ",
     "Edit": "ترمیم",
-    "RelatedDestinations": "متعلقہ منزلیں"
+    "RelatedDestinations": "متعلقہ منزلیں",
+    "Latitude": "عرض بلد",
+    "Longitude": "طول بلد",
+    "Add": "شامل کریں"
+
   },
   "hotelsPage": {
     "Hotels": "ہوٹلز", "Add Hotel": "ہوٹل شامل کریں", "AddHotel": "ہوٹل شامل کریں",
@@ -721,7 +725,12 @@
     "Available": "دستیاب",
     "Total": "کل",
     "ViewEdit": "دیکھیں / ترمیم",
-    "BackToHotel": "ہوٹل پر واپس"
+    "BackToHotel": "ہوٹل پر واپس",
+    "Latitude": "عرض بلد",
+    "Longitude": "طول بلد",
+    "WhatsApp": "واٹس ایپ",
+    "PetPolicy": "پالتو جانوروں کی پالیسی",
+    "Image360": "۳۶۰ ڈگری تصویر"
   },
   "hotelBookingsPage": {
     "HotelBookings": "ہوٹل بکنگز",

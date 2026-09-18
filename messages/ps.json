@@ -769,7 +769,10 @@
     "Edit": "سمول",
     "RelatedDestinations": "اړوند مقصدونه",
     "Yes": "هو",
-    "No": "نه"
+    "No": "نه",
+    "Latitude": "عرض البلد",
+    "Longitude": "طول البلد",
+    "Add": "اضافه کړئ"
   },
   "hotelsPage": {
     "Hotels": "هوټلونه", "Add Hotel": "هوټل اضافه کړئ", "AddHotel": "هوټل اضافه کړئ",
@@ -834,7 +837,12 @@
     "Available": "شته",
     "Total": "ټول",
     "ViewEdit": "کتنه / سمول",
-    "BackToHotel": "بیرته هوټل ته"
+    "BackToHotel": "بیرته هوټل ته",
+    "Latitude": "عرض البلد",
+    "Longitude": "طول البلد",
+    "WhatsApp": "واټس اپ",
+    "PetPolicy": "د کورني څارویو پالیسي",
+    "Image360": "د ۳۶۰ درجې انځور"
   },
   "hotelBookingsPage": {
     "HotelBookings": "د هوټل بکنګونه",

@@ -16,9 +16,14 @@ const page = () => {
   const { addHotel } = useContext(ContextAdmin);
 
   const [images, setImages] = useState([]);
+  const [image360, setImage360] = useState(null);
   const [amenities, setAmenities] = useState([""]);
   const [propertyType, setPropertyType] = useState("Hotel");
   const [starRating, setStarRating] = useState(3);
+  const [isActive, setIsActive] = useState(true);
+
+  const cleanStr = (val) =>
+    val && val.toString().trim() !== "" ? val.toString().trim() : undefined;
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -30,7 +35,13 @@ const page = () => {
     });
   };
 
-  const cleanStr = (val) => (val && val.toString().trim() !== "" ? val.toString().trim() : undefined);
+  const handle360Change = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setImage360(reader.result);
+    reader.readAsDataURL(file);
+  };
 
   const [state, action, isPending] = useActionState(async (prev, formData) => {
     try {
@@ -53,6 +64,7 @@ const page = () => {
         shortDescription: cleanStr(formData.get("shortDescription")),
         amenities: amenities.filter((a) => a && a.trim() !== ""),
         images,
+        image360: image360 || undefined,
         contactInfo,
         policies: {
           checkInTime: cleanStr(formData.get("checkInTime")) || "14:00",
@@ -60,8 +72,20 @@ const page = () => {
           cancellationPolicy: cleanStr(formData.get("cancellationPolicy")),
           petPolicy: cleanStr(formData.get("petPolicy")),
         },
-        isActive: true,
+        isActive,
       };
+
+      // Safely parse coordinates
+      const latStr = formData.get("lat");
+      const lngStr = formData.get("lng");
+      if (
+        latStr &&
+        lngStr &&
+        !isNaN(parseFloat(latStr)) &&
+        !isNaN(parseFloat(lngStr))
+      ) {
+        data.coordinates = { lat: parseFloat(latStr), lng: parseFloat(lngStr) };
+      }
 
       const res = await addHotel(data);
       if (res?.success) {
@@ -70,9 +94,7 @@ const page = () => {
       } else {
         let msg = res?.message || "Failed to add hotel.";
         if (res?.errors) {
-          res.errors.forEach((e) => {
-            msg += `\n${e.msg}`;
-          });
+          res.errors.forEach((e) => { msg += `\n${e.msg}`; });
         }
         return { success: false, msg };
       }
@@ -127,6 +149,16 @@ const page = () => {
             onChange={(v) => setStarRating(parseInt(v))}
           />
         </div>
+
+        <div className="col-span-2 md:col-span-1">
+          <Label>{gt("Latitude", "Latitude")}</Label>
+          <Input name="lat" type="number" step="any" placeholder="e.g. 34.5553" />
+        </div>
+        <div className="col-span-2 md:col-span-1">
+          <Label>{gt("Longitude", "Longitude")}</Label>
+          <Input name="lng" type="number" step="any" placeholder="e.g. 69.2075" />
+        </div>
+
         <div className="col-span-2">
           <Label>{gt("ShortDescription", "Short Description")}</Label>
           <Input name="shortDescription" id="shortDescription" />
@@ -142,7 +174,6 @@ const page = () => {
           />
         </div>
 
-        {/* Contact Info */}
         <div className="col-span-2 md:col-span-1">
           <Label>{gt("Phone", "Phone")}</Label>
           <Input name="phone" id="phone" type="tel" />
@@ -160,7 +191,6 @@ const page = () => {
           <Input name="website" id="website" type="url" />
         </div>
 
-        {/* Policies */}
         <div className="col-span-2 md:col-span-1">
           <Label>{gt("CheckInTime", "Check-in Time")}</Label>
           <Input name="checkInTime" id="checkInTime" defaultValue="14:00" />
@@ -171,10 +201,25 @@ const page = () => {
         </div>
         <div className="col-span-2">
           <Label>{gt("CancellationPolicy", "Cancellation Policy")}</Label>
-          <Input name="cancellationPolicy" id="cancellationPolicy" />
+          <Input name="cancellationPolicy" id="cancellationPolicy" placeholder="Free cancellation up to 24 hours before check-in." />
+        </div>
+        <div className="col-span-2">
+          <Label>{gt("PetPolicy", "Pet Policy")}</Label>
+          <Input name="petPolicy" id="petPolicy" placeholder="Pets not allowed." />
         </div>
 
-        {/* Amenities */}
+        <div className="col-span-2 md:col-span-1">
+          <Label>{gt("Status", "Status")}</Label>
+          <Select
+            options={[
+              { label: gt("Active", "Active"), value: "true" },
+              { label: gt("Inactive", "Inactive"), value: "false" },
+            ]}
+            defaultValue="true"
+            onChange={(v) => setIsActive(v === "true")}
+          />
+        </div>
+
         <div className="col-span-2">
           <Label>{gt("Amenities", "Amenities")}</Label>
           {amenities.map((a, i) => (
@@ -206,11 +251,10 @@ const page = () => {
             onClick={() => setAmenities((p) => [...p, ""])}
             className="text-sm text-brand-500 hover:underline"
           >
-            + Add
+            + {gt("Add", "Add")}
           </button>
         </div>
 
-        {/* Images */}
         <div className="col-span-2">
           <Label>{gt("Images", "Images")} (max 10)</Label>
           <input
@@ -234,6 +278,28 @@ const page = () => {
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        <div className="col-span-2">
+          <Label>{gt("Image360", "360° Image (Optional)")}</Label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handle360Change}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+          />
+          {image360 && (
+            <div className="mt-3 relative inline-block">
+              <img src={image360} alt="360" className="w-full max-w-md h-40 object-cover rounded-lg border" />
+              <button
+                type="button"
+                onClick={() => setImage360(null)}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
+              >
+                ×
+              </button>
             </div>
           )}
         </div>

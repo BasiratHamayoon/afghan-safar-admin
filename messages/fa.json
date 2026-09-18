@@ -769,7 +769,10 @@
     "Edit": "ویرایش",
     "RelatedDestinations": "مقاصد مرتبط",
     "Yes": "بله",
-    "No": "خیر"
+    "No": "خیر",
+    "Latitude": "عرض جغرافیایی",
+    "Longitude": "طول جغرافیایی",
+    "Add": "افزودن"
   },
   "hotelsPage": {
     "Hotels": "هتل‌ها", "Add Hotel": "افزودن هتل", "AddHotel": "افزودن هتل",
@@ -834,7 +837,12 @@
     "Available": "موجود",
     "Total": "کل",
     "ViewEdit": "مشاهده / ویرایش",
-    "BackToHotel": "بازگشت به هتل"
+    "BackToHotel": "بازگشت به هتل",
+    "Latitude": "عرض جغرافیایی",
+    "Longitude": "طول جغرافیایی",
+    "WhatsApp": "واتساپ",
+    "PetPolicy": "سیاست حیوانات خانگی",
+    "Image360": "تصویر ۳۶۰ درجه"
   },
   "hotelBookingsPage": {
     "HotelBookings": "رزروهای هتل",

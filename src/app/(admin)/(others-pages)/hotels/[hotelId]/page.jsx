@@ -24,11 +24,9 @@ const page = () => {
   const { hotelId } = useParams();
   const { loading, fetchHotelById, editHotel, deleteHotels, companyUser } = useContext(ContextAdmin);
 
-  // Dedicated state management to prevent flickering
   const [hotel, setHotel] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
 
-  // 🔥 CRITICAL FIX: Always fetch fresh data with rooms from backend
   const loadHotel = async () => {
     const res = await fetchHotelById(hotelId);
     if (res?.data) {
@@ -39,7 +37,6 @@ const page = () => {
 
   useEffect(() => {
     if (companyUser !== null) {
-      // Always fetch fresh to ensure rooms are populated
       loadHotel();
     }
   }, [companyUser, hotelId]);
@@ -53,11 +50,9 @@ const page = () => {
   };
 
   const handleHotelUpdate = (updatedHotel) => {
-    // Preserve rooms when updating hotel info
     setHotel((prev) => ({ ...updatedHotel, rooms: prev?.rooms || updatedHotel.rooms || [] }));
   };
 
-  // 1. Show a clean, centered loader while fetching page-level data
   if (pageLoading) {
     return (
       <div className="flex h-[60vh] w-full items-center justify-center">
@@ -66,7 +61,6 @@ const page = () => {
     );
   }
 
-  // 2. Only show "NotFound" if loading has completed and no hotel exists
   if (!hotel) {
     return (
       <NotFound
@@ -81,7 +75,6 @@ const page = () => {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* HOTEL DETAILS SECTION */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
         <div className="flex flex-row items-center justify-between w-full mb-5">
           <div>
@@ -92,16 +85,11 @@ const page = () => {
               {gt("HotelDetailsSubtitle", "View and manage hotel information")}
             </p>
           </div>
-          {/* Sizing Fix: Both buttons share exact h-[35px] height and perfect flex centering */}
           <div className="flex items-center gap-2">
             <Button size="md" className="h-[35px]" onClick={openModal}>
               {gt("Edit", "Edit")}
             </Button>
-            <Button
-              startIcon={<TrashBinIcon />}
-              className="bg-error-600 h-[35px] hover:bg-error-700"
-              onClick={openDel}
-            >
+            <Button startIcon={<TrashBinIcon />} className="bg-error-600 h-[35px] hover:bg-error-700" onClick={openDel}>
               {gt("Delete", "Delete")}
             </Button>
           </div>
@@ -120,12 +108,32 @@ const page = () => {
           </div>
         )}
 
+        {hotel.image360 && (
+          <div className="mb-5">
+            <p className="med-14 mb-2">{gt("Image360", "360° View Image")}</p>
+            <img
+              src={hotel.image360}
+              alt="360"
+              className="w-full max-h-96 object-cover rounded-xl border border-gray-200 dark:border-gray-700"
+            />
+          </div>
+        )}
+
         <div className="p-4 grid grid-cols-[20%_1fr] gap-x-6">
           <InfoRow label={gt("Name", "Name")} value={hotel.name} />
           <InfoRow label={gt("Province", "Province")} value={hotel.province} />
           <InfoRow label={gt("Location", "Location")} value={hotel.location} />
+          <InfoRow label={gt("Address", "Address")} value={hotel.address} />
           <InfoRow label={gt("PropertyType", "Type")} value={hotel.propertyType} />
           <InfoRow label={gt("StarRating", "Stars")} value={"⭐".repeat(hotel.starRating || 0)} />
+          <InfoRow
+            label={gt("Coordinates", "Coordinates")}
+            value={
+              hotel.coordinates?.lat && hotel.coordinates?.lng
+                ? `${hotel.coordinates.lat}, ${hotel.coordinates.lng}`
+                : "N/A"
+            }
+          />
           <InfoRow
             label={gt("ApprovalStatus", "Approval")}
             comp
@@ -149,8 +157,20 @@ const page = () => {
           />
           <InfoRow label={gt("Phone", "Phone")} value={hotel.contactInfo?.phone} />
           <InfoRow label={gt("Email", "Email")} value={hotel.contactInfo?.email} />
+          <InfoRow label={gt("WhatsApp", "WhatsApp")} value={hotel.contactInfo?.whatsappNumber} />
+          <InfoRow label={gt("Website", "Website")} value={hotel.contactInfo?.website} />
           <InfoRow label={gt("CheckInTime", "Check-in")} value={hotel.policies?.checkInTime} />
           <InfoRow label={gt("CheckOutTime", "Check-out")} value={hotel.policies?.checkOutTime} />
+          <InfoRow label={gt("CancellationPolicy", "Cancellation Policy")} value={hotel.policies?.cancellationPolicy} />
+          <InfoRow label={gt("PetPolicy", "Pet Policy")} value={hotel.policies?.petPolicy} />
+
+          {hotel.shortDescription && (
+            <div className="col-span-2 border-t border-t-[#D5D6DD] py-5">
+              <p className="mb-2 med-14">{gt("ShortDescription", "Short Description")}</p>
+              <p className="bk-14 !text-gray-700 dark:!text-gray-300">{hotel.shortDescription}</p>
+            </div>
+          )}
+
           <div className="col-span-2 border-t border-t-[#D5D6DD] py-5">
             <p className="mb-2 med-14">{gt("Description", "Description")}</p>
             <p className="bk-14 !text-gray-700 dark:!text-gray-300 whitespace-pre-wrap">{hotel.description}</p>
@@ -171,17 +191,19 @@ const page = () => {
         </div>
       </div>
 
-      {/* ROOMS TABLE SECTION */}
-      <RoomsSection
-        hotelId={hotelId}
-        rooms={hotel.rooms || []}
-        onRoomsUpdate={loadHotel}
-        gt={gt}
-      />
+      <RoomsSection hotelId={hotelId} rooms={hotel.rooms || []} onRoomsUpdate={loadHotel} gt={gt} />
 
-      {/* Edit Hotel Modal */}
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[600px] max-h-[85vh] overflow-y-scroll">
-        <EditForm gt={gt} hotel={hotel} editHotel={editHotel} onUpdate={handleHotelUpdate} closeModal={closeModal} />
+      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] max-h-[85vh] overflow-y-scroll">
+        {hotel && (
+          <EditForm
+            key={hotel._id}
+            gt={gt}
+            hotel={hotel}
+            editHotel={editHotel}
+            onUpdate={handleHotelUpdate}
+            closeModal={closeModal}
+          />
+        )}
       </Modal>
 
       <ModelActions
@@ -210,25 +232,64 @@ const InfoRow = ({ label, value, comp }) => (
 
 const EditForm = ({ gt, hotel, editHotel, onUpdate, closeModal }) => {
   const [propertyType, setPropertyType] = useState(hotel?.propertyType || "Hotel");
+  const [isActive, setIsActive] = useState(hotel?.isActive ?? true);
+  const [amenitiesInput, setAmenitiesInput] = useState((hotel?.amenities || []).join(", "));
+
+  const cleanStr = (val) =>
+    val && val.toString().trim() !== "" ? val.toString().trim() : undefined;
 
   const [state, action, isPending] = useActionState(async (prev, formData) => {
     try {
+      const targetPropType =
+        propertyType && typeof propertyType === "object"
+          ? propertyType.value
+          : propertyType;
+
+      const amenitiesArr = amenitiesInput
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
       const data = {
         hotelId: hotel._id,
-        name: formData.get("name"),
-        propertyType,
+        name: cleanStr(formData.get("name")),
+        propertyType: targetPropType || "Hotel",
         starRating: parseInt(formData.get("starRating")) || hotel.starRating,
-        location: formData.get("location"),
-        province: formData.get("province"),
-        address: formData.get("address"),
-        description: formData.get("description"),
-        shortDescription: formData.get("shortDescription") || undefined,
+        location: cleanStr(formData.get("location")),
+        province: cleanStr(formData.get("province")),
+        address: cleanStr(formData.get("address")) || "",
+        description: cleanStr(formData.get("description")),
+        shortDescription: cleanStr(formData.get("shortDescription")),
+        amenities: amenitiesArr,
+        isActive,
+        contactInfo: {
+          phone: cleanStr(formData.get("phone")) || null,
+          whatsappNumber: cleanStr(formData.get("whatsapp")) || null,
+          email: cleanStr(formData.get("email")) || null,
+          website: cleanStr(formData.get("website")) || null,
+        },
+        policies: {
+          checkInTime: cleanStr(formData.get("checkInTime")) || "14:00",
+          checkOutTime: cleanStr(formData.get("checkOutTime")) || "12:00",
+          cancellationPolicy: cleanStr(formData.get("cancellationPolicy")),
+          petPolicy: cleanStr(formData.get("petPolicy")),
+        },
       };
+
+      const latStr = formData.get("lat");
+      const lngStr = formData.get("lng");
+      if (
+        latStr &&
+        lngStr &&
+        !isNaN(parseFloat(latStr)) &&
+        !isNaN(parseFloat(lngStr))
+      ) {
+        data.coordinates = { lat: parseFloat(latStr), lng: parseFloat(lngStr) };
+      }
+
       const res = await editHotel(data);
       if (res?.success) {
-        // Instant context update
         onUpdate(res.data);
-        // Clean modal close
         closeModal();
         return { success: true, msg: res.message };
       }
@@ -254,7 +315,7 @@ const EditForm = ({ gt, hotel, editHotel, onUpdate, closeModal }) => {
       </div>
       <div className="col-span-2 md:col-span-1">
         <Label>{gt("Address", "Address")}</Label>
-        <Input name="address" defaultValue={hotel?.address} />
+        <Input name="address" defaultValue={hotel?.address || ""} />
       </div>
       <div className="col-span-2 md:col-span-1">
         <Label>{gt("PropertyType", "Type")}</Label>
@@ -275,6 +336,76 @@ const EditForm = ({ gt, hotel, editHotel, onUpdate, closeModal }) => {
         <Label>{gt("StarRating", "Stars")}</Label>
         <Input name="starRating" type="number" min="1" max="5" defaultValue={hotel?.starRating} />
       </div>
+
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("Latitude", "Latitude")}</Label>
+        <Input name="lat" type="number" step="any" defaultValue={hotel?.coordinates?.lat || ""} />
+      </div>
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("Longitude", "Longitude")}</Label>
+        <Input name="lng" type="number" step="any" defaultValue={hotel?.coordinates?.lng || ""} />
+      </div>
+
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("Phone", "Phone")}</Label>
+        <Input name="phone" type="tel" defaultValue={hotel?.contactInfo?.phone || ""} />
+      </div>
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("WhatsApp", "WhatsApp")}</Label>
+        <Input name="whatsapp" type="tel" defaultValue={hotel?.contactInfo?.whatsappNumber || ""} />
+      </div>
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("Email", "Email")}</Label>
+        <Input name="email" type="email" defaultValue={hotel?.contactInfo?.email || ""} />
+      </div>
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("Website", "Website")}</Label>
+        <Input name="website" type="url" defaultValue={hotel?.contactInfo?.website || ""} />
+      </div>
+
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("CheckInTime", "Check-in Time")}</Label>
+        <Input name="checkInTime" defaultValue={hotel?.policies?.checkInTime || "14:00"} />
+      </div>
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("CheckOutTime", "Check-out Time")}</Label>
+        <Input name="checkOutTime" defaultValue={hotel?.policies?.checkOutTime || "12:00"} />
+      </div>
+      <div className="col-span-2">
+        <Label>{gt("CancellationPolicy", "Cancellation Policy")}</Label>
+        <Input name="cancellationPolicy" defaultValue={hotel?.policies?.cancellationPolicy || ""} />
+      </div>
+      <div className="col-span-2">
+        <Label>{gt("PetPolicy", "Pet Policy")}</Label>
+        <Input name="petPolicy" defaultValue={hotel?.policies?.petPolicy || ""} />
+      </div>
+
+      <div className="col-span-2">
+        <Label>{gt("Amenities", "Amenities (comma separated)")}</Label>
+        <Input
+          value={amenitiesInput}
+          onChange={(e) => setAmenitiesInput(e.target.value)}
+          placeholder="Free WiFi, Swimming Pool, Restaurant"
+        />
+      </div>
+
+      <div className="col-span-2 md:col-span-1">
+        <Label>{gt("Status", "Status")}</Label>
+        <Select
+          options={[
+            { label: gt("Active", "Active"), value: "true" },
+            { label: gt("Inactive", "Inactive"), value: "false" },
+          ]}
+          defaultValue={isActive ? "true" : "false"}
+          onChange={(v) => setIsActive(v === "true")}
+        />
+      </div>
+
+      <div className="col-span-2">
+        <Label>{gt("ShortDescription", "Short Description")}</Label>
+        <Input name="shortDescription" defaultValue={hotel?.shortDescription || ""} />
+      </div>
+
       <div className="col-span-2">
         <Label>{gt("Description", "Description")} *</Label>
         <textarea
@@ -285,6 +416,7 @@ const EditForm = ({ gt, hotel, editHotel, onUpdate, closeModal }) => {
           className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
         />
       </div>
+
       {state && (
         <div className="col-span-2">
           <Alert
@@ -294,6 +426,7 @@ const EditForm = ({ gt, hotel, editHotel, onUpdate, closeModal }) => {
           />
         </div>
       )}
+
       <div className="flex items-center col-span-2 gap-3 px-2 lg:justify-end">
         <Button size="sm" disabled={isPending} type="submit">
           {isPending ? "..." : gt("Save", "Save")}

@@ -15,6 +15,7 @@ const page = () => {
   const { addDestination } = useContext(ContextAdmin);
 
   const [images, setImages] = useState([]);
+  const [image360, setImage360] = useState(null);
   const [highlights, setHighlights] = useState([""]);
   const [travelTips, setTravelTips] = useState([""]);
   const [isActive, setIsActive] = useState(true);
@@ -22,8 +23,14 @@ const page = () => {
   const [category, setCategory] = useState("Nature");
   const [currency, setCurrency] = useState("AFN");
 
-  // Safe translation helper
   const getTrans = (key, fallback) => (t.has(key) ? t(key) : fallback);
+
+  // Safely extract string from Select value (handles both string and object)
+  const extractVal = (val) => {
+    if (val === null || val === undefined) return "";
+    if (typeof val === "object" && val !== null && "value" in val) return String(val.value);
+    return String(val);
+  };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -33,11 +40,17 @@ const page = () => {
     }
     files.forEach((file) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImages((prev) => [...prev, reader.result]);
-      };
+      reader.onloadend = () => setImages((prev) => [...prev, reader.result]);
       reader.readAsDataURL(file);
     });
+  };
+
+  const handle360Change = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setImage360(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const removeImage = (index) => {
@@ -46,61 +59,81 @@ const page = () => {
 
   const [state, action, isPending] = useActionState(async (prev, formData) => {
     try {
+      const rawTitle = String(formData.get("title") || "").trim();
+      const rawProvince = String(formData.get("province") || "").trim();
+      const rawDescription = String(formData.get("description") || "").trim();
+      const rawShortDesc = String(formData.get("shortDescription") || "").trim();
+      const rawBestTime = String(formData.get("bestTimeToVisit") || "").trim();
+      const rawDuration = String(formData.get("typicalDuration") || "").trim();
+
+      const targetCategory = extractVal(category) || "Nature";
+      const targetCurrency = extractVal(currency) || "AFN";
+
+      const cleanHighlights = highlights
+        .map((h) => String(h || "").trim())
+        .filter(Boolean);
+
+      const cleanTravelTips = travelTips
+        .map((t) => String(t || "").trim())
+        .filter(Boolean);
+
       const data = {
-        title: formData.get("title"),
-        province: formData.get("province"),
-        description: formData.get("description"),
-        shortDescription: formData.get("shortDescription") || undefined,
-        category,
-        bestTimeToVisit: formData.get("bestTimeToVisit") || undefined,
-        typicalDuration: formData.get("typicalDuration") || undefined,
-        coordinates:
-          formData.get("lat") && formData.get("lng")
-            ? {
-                lat: parseFloat(formData.get("lat")),
-                lng: parseFloat(formData.get("lng")),
-              }
-            : undefined,
-        highlights: highlights.filter((h) => h.trim() !== ""),
-        travelTips: travelTips.filter((tip) => tip.trim() !== ""),
+        title: rawTitle,
+        province: rawProvince,
+        description: rawDescription,
+        shortDescription: rawShortDesc,
+        category: targetCategory,
+        bestTimeToVisit: rawBestTime,
+        typicalDuration: rawDuration,
+        highlights: cleanHighlights,
+        travelTips: cleanTravelTips,
         estimatedBudget: {
-          min: formData.get("budgetMin")
-            ? parseFloat(formData.get("budgetMin"))
-            : 0,
-          max: formData.get("budgetMax")
-            ? parseFloat(formData.get("budgetMax"))
-            : 0,
-          currency,
+          min: formData.get("budgetMin") ? parseFloat(formData.get("budgetMin")) : 0,
+          max: formData.get("budgetMax") ? parseFloat(formData.get("budgetMax")) : 0,
+          currency: targetCurrency,
         },
         images,
-        isActive,
-        isRecommended,
-        recommendationOrder:
-          isRecommended && formData.get("recommendationOrder")
-            ? parseInt(formData.get("recommendationOrder"))
-            : undefined,
+        image360: image360 || undefined,
+        isActive: Boolean(isActive),
+        isRecommended: Boolean(isRecommended),
       };
+
+      // Coordinates
+      const latStr = formData.get("lat");
+      const lngStr = formData.get("lng");
+      if (latStr && lngStr) {
+        const lat = parseFloat(latStr);
+        const lng = parseFloat(lngStr);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          data.coordinates = { lat, lng };
+        }
+      }
+
+      // Recommendation Order
+      if (isRecommended && formData.get("recommendationOrder")) {
+        const orderVal = parseInt(formData.get("recommendationOrder"));
+        if (!isNaN(orderVal)) data.recommendationOrder = orderVal;
+      }
 
       const res = await addDestination(data);
 
       if (res?.success) {
-        setTimeout(() => {
-          router.push("/destinations");
-        }, 1500);
+        setTimeout(() => router.push("/destinations"), 1500);
         return {
           success: true,
           msg: res.message || "Destination added successfully!",
         };
       } else {
         let msg = res?.message || "Failed to add destination.";
-        if (res?.errors) {
+        if (res?.errors && Array.isArray(res.errors)) {
           res.errors.forEach((err) => {
-            msg += `\n${err.msg}`;
+            msg += `\n${err.msg || err.message}`;
           });
         }
         return { success: false, msg };
       }
     } catch (err) {
+      console.error(err);
       return { success: false, msg: "Something went wrong. Please try again." };
     }
   }, null);
@@ -113,10 +146,7 @@ const page = () => {
         </h3>
       </div>
 
-      <form
-        action={action}
-        className="grid grid-cols-1 md:grid-cols-2 gap-[20px]"
-      >
+      <form action={action} className="grid grid-cols-1 md:grid-cols-2 gap-[20px]">
         <div className="col-span-2 md:col-span-1">
           <Label htmlFor="title">
             {getTrans("Title", "Title")} <span className="text-error-500">*</span>
@@ -145,7 +175,7 @@ const page = () => {
               { label: getTrans("Modern", "Modern"), value: "Modern" },
             ]}
             defaultValue="Nature"
-            onChange={(val) => setCategory(val)}
+            onChange={(val) => setCategory(extractVal(val))}
           />
         </div>
 
@@ -193,31 +223,23 @@ const page = () => {
               { label: "USD", value: "USD" },
             ]}
             defaultValue="AFN"
-            onChange={(val) => setCurrency(val)}
+            onChange={(val) => setCurrency(extractVal(val))}
           />
         </div>
 
         <div className="col-span-2 md:col-span-1">
-          <Label>{getTrans("Coordinates", "Coordinates")}</Label>
-          <div className="flex gap-2">
-            <Input
-              name="lat"
-              type="number"
-              step="any"
-              placeholder="Latitude"
-            />
-            <Input
-              name="lng"
-              type="number"
-              step="any"
-              placeholder="Longitude"
-            />
-          </div>
+          <Label>{getTrans("Latitude", "Latitude")}</Label>
+          <Input name="lat" type="number" step="any" placeholder="e.g. 34.8417" />
+        </div>
+
+        <div className="col-span-2 md:col-span-1">
+          <Label>{getTrans("Longitude", "Longitude")}</Label>
+          <Input name="lng" type="number" step="any" placeholder="e.g. 67.2186" />
         </div>
 
         <div className="col-span-2">
           <Label htmlFor="shortDescription">{getTrans("ShortDescription", "Short Description")}</Label>
-          <Input name="shortDescription" id="shortDescription" />
+          <Input name="shortDescription" id="shortDescription" maxLength={200} />
         </div>
 
         <div className="col-span-2">
@@ -241,7 +263,7 @@ const page = () => {
               { label: getTrans("Inactive", "Inactive"), value: "false" },
             ]}
             defaultValue="true"
-            onChange={(val) => setIsActive(val === "true")}
+            onChange={(val) => setIsActive(extractVal(val) === "true")}
           />
         </div>
 
@@ -254,7 +276,7 @@ const page = () => {
                 { label: getTrans("Yes", "Yes"), value: "true" },
               ]}
               defaultValue="false"
-              onChange={(val) => setIsRecommended(val === "true")}
+              onChange={(val) => setIsRecommended(extractVal(val) === "true")}
             />
             {isRecommended && (
               <Input
@@ -299,6 +321,32 @@ const page = () => {
         </div>
 
         <div className="col-span-2">
+          <Label>{getTrans("Image360", "360° Image (Optional)")}</Label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handle360Change}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+          />
+          {image360 && (
+            <div className="mt-3 relative inline-block">
+              <img
+                src={image360}
+                alt="360"
+                className="w-full max-w-md h-40 object-cover rounded-lg border"
+              />
+              <button
+                type="button"
+                onClick={() => setImage360(null)}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full text-xs flex items-center justify-center shadow-lg"
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="col-span-2">
           <Label>{getTrans("Highlights", "Highlights")}</Label>
           {highlights.map((h, i) => (
             <div key={i} className="flex gap-2 mb-2">
@@ -330,7 +378,7 @@ const page = () => {
             onClick={() => setHighlights((prev) => [...prev, ""])}
             className="text-sm text-brand-500 hover:underline"
           >
-            + Add
+            + {getTrans("Add", "Add")}
           </button>
         </div>
 
@@ -366,7 +414,7 @@ const page = () => {
             onClick={() => setTravelTips((prev) => [...prev, ""])}
             className="text-sm text-brand-500 hover:underline"
           >
-            + Add
+            + {getTrans("Add", "Add")}
           </button>
         </div>
 
